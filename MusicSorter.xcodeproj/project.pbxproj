@@ -1,0 +1,571 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 110;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		B5B7FC2F30853759000A3D5D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B5B7FC1530853758000A3D5D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B5B7FC1C30853758000A3D5D;
+			remoteInfo = MusicSorter;
+		};
+		B5B7FC3930853759000A3D5D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B5B7FC1530853758000A3D5D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B5B7FC1C30853758000A3D5D;
+			remoteInfo = MusicSorter;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B5B7FC1D30853758000A3D5D /* MusicSorter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MusicSorter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5B7FC2E30853759000A3D5D /* MusicSorterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MusicSorterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5B7FC3830853759000A3D5D /* MusicSorterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MusicSorterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B5B7FC3E30853759000A3D5D /* Exceptions for "MusicSorter" folder in "MusicSorter" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B5B7FC1C30853758000A3D5D /* MusicSorter */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B5B7FC1F30853758000A3D5D /* MusicSorter */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B5B7FC3E30853759000A3D5D /* Exceptions for "MusicSorter" folder in "MusicSorter" target */,
+			);
+			path = MusicSorter;
+			sourceTree = "<group>";
+		};
+		B5B7FC3130853759000A3D5D /* MusicSorterTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MusicSorterTests;
+			sourceTree = "<group>";
+		};
+		B5B7FC3B30853759000A3D5D /* MusicSorterUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MusicSorterUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B5B7FC1A30853758000A3D5D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		B5B7FC2B30853759000A3D5D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		B5B7FC3530853759000A3D5D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B5B7FC1430853758000A3D5D = {
+			isa = PBXGroup;
+			children = (
+				B5B7FC1F30853758000A3D5D /* MusicSorter */,
+				B5B7FC3130853759000A3D5D /* MusicSorterTests */,
+				B5B7FC3B30853759000A3D5D /* MusicSorterUITests */,
+				B5B7FC1E30853758000A3D5D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B5B7FC1E30853758000A3D5D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B5B7FC1D30853758000A3D5D /* MusicSorter.app */,
+				B5B7FC2E30853759000A3D5D /* MusicSorterTests.xctest */,
+				B5B7FC3830853759000A3D5D /* MusicSorterUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B5B7FC1C30853758000A3D5D /* MusicSorter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B5B7FC3F30853759000A3D5D /* Build configuration list for PBXNativeTarget "MusicSorter" */;
+			buildPhases = (
+				B5B7FC1930853758000A3D5D /* Sources */,
+				B5B7FC1A30853758000A3D5D /* Frameworks */,
+				B5B7FC1B30853758000A3D5D /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				B5B7FC1F30853758000A3D5D /* MusicSorter */,
+			);
+			name = MusicSorter;
+			productName = MusicSorter;
+			productReference = B5B7FC1D30853758000A3D5D /* MusicSorter.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B5B7FC2D30853759000A3D5D /* MusicSorterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B5B7FC4430853759000A3D5D /* Build configuration list for PBXNativeTarget "MusicSorterTests" */;
+			buildPhases = (
+				B5B7FC2A30853759000A3D5D /* Sources */,
+				B5B7FC2B30853759000A3D5D /* Frameworks */,
+				B5B7FC2C30853759000A3D5D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B5B7FC3030853759000A3D5D /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B5B7FC3130853759000A3D5D /* MusicSorterTests */,
+			);
+			name = MusicSorterTests;
+			productName = MusicSorterTests;
+			productReference = B5B7FC2E30853759000A3D5D /* MusicSorterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B5B7FC3730853759000A3D5D /* MusicSorterUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B5B7FC4730853759000A3D5D /* Build configuration list for PBXNativeTarget "MusicSorterUITests" */;
+			buildPhases = (
+				B5B7FC3430853759000A3D5D /* Sources */,
+				B5B7FC3530853759000A3D5D /* Frameworks */,
+				B5B7FC3630853759000A3D5D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B5B7FC3A30853759000A3D5D /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B5B7FC3B30853759000A3D5D /* MusicSorterUITests */,
+			);
+			name = MusicSorterUITests;
+			productName = MusicSorterUITests;
+			productReference = B5B7FC3830853759000A3D5D /* MusicSorterUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B5B7FC1530853758000A3D5D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					B5B7FC1C30853758000A3D5D = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					B5B7FC2D30853759000A3D5D = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = B5B7FC1C30853758000A3D5D;
+					};
+					B5B7FC3730853759000A3D5D = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = B5B7FC1C30853758000A3D5D;
+					};
+				};
+			};
+			buildConfigurationList = B5B7FC1830853758000A3D5D /* Build configuration list for PBXProject "MusicSorter" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B5B7FC1430853758000A3D5D;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B5B7FC1E30853758000A3D5D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B5B7FC1C30853758000A3D5D /* MusicSorter */,
+				B5B7FC2D30853759000A3D5D /* MusicSorterTests */,
+				B5B7FC3730853759000A3D5D /* MusicSorterUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B5B7FC1B30853758000A3D5D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		B5B7FC2C30853759000A3D5D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		B5B7FC3630853759000A3D5D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B5B7FC1930853758000A3D5D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		B5B7FC2A30853759000A3D5D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		B5B7FC3430853759000A3D5D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B5B7FC3030853759000A3D5D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B5B7FC1C30853758000A3D5D /* MusicSorter */;
+			targetProxy = B5B7FC2F30853759000A3D5D /* PBXContainerItemProxy */;
+		};
+		B5B7FC3A30853759000A3D5D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B5B7FC1C30853758000A3D5D /* MusicSorter */;
+			targetProxy = B5B7FC3930853759000A3D5D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		B5B7FC4030853759000A3D5D /* Debug configuration for PBXNativeTarget "MusicSorter" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MusicSorter/MusicSorter.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YQK34HANSX;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MusicSorter/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = it.angedell.MusicSorter;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B5B7FC4130853759000A3D5D /* Release configuration for PBXNativeTarget "MusicSorter" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MusicSorter/MusicSorter.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YQK34HANSX;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MusicSorter/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = it.angedell.MusicSorter;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B5B7FC4230853759000A3D5D /* Debug configuration for PBXProject "MusicSorter" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = YQK34HANSX;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B5B7FC4330853759000A3D5D /* Release configuration for PBXProject "MusicSorter" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = YQK34HANSX;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B5B7FC4530853759000A3D5D /* Debug configuration for PBXNativeTarget "MusicSorterTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YQK34HANSX;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = it.angedell.MusicSorterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MusicSorter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MusicSorter";
+			};
+			name = Debug;
+		};
+		B5B7FC4630853759000A3D5D /* Release configuration for PBXNativeTarget "MusicSorterTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YQK34HANSX;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = it.angedell.MusicSorterTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MusicSorter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MusicSorter";
+			};
+			name = Release;
+		};
+		B5B7FC4830853759000A3D5D /* Debug configuration for PBXNativeTarget "MusicSorterUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YQK34HANSX;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = it.angedell.MusicSorterUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MusicSorter;
+			};
+			name = Debug;
+		};
+		B5B7FC4930853759000A3D5D /* Release configuration for PBXNativeTarget "MusicSorterUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YQK34HANSX;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = it.angedell.MusicSorterUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MusicSorter;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B5B7FC1830853758000A3D5D /* Build configuration list for PBXProject "MusicSorter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B5B7FC4230853759000A3D5D /* Debug configuration for PBXProject "MusicSorter" */,
+				B5B7FC4330853759000A3D5D /* Release configuration for PBXProject "MusicSorter" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		B5B7FC3F30853759000A3D5D /* Build configuration list for PBXNativeTarget "MusicSorter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B5B7FC4030853759000A3D5D /* Debug configuration for PBXNativeTarget "MusicSorter" */,
+				B5B7FC4130853759000A3D5D /* Release configuration for PBXNativeTarget "MusicSorter" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		B5B7FC4430853759000A3D5D /* Build configuration list for PBXNativeTarget "MusicSorterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B5B7FC4530853759000A3D5D /* Debug configuration for PBXNativeTarget "MusicSorterTests" */,
+				B5B7FC4630853759000A3D5D /* Release configuration for PBXNativeTarget "MusicSorterTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		B5B7FC4730853759000A3D5D /* Build configuration list for PBXNativeTarget "MusicSorterUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B5B7FC4830853759000A3D5D /* Debug configuration for PBXNativeTarget "MusicSorterUITests" */,
+				B5B7FC4930853759000A3D5D /* Release configuration for PBXNativeTarget "MusicSorterUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B5B7FC1530853758000A3D5D /* Project object */;
+	validationLevel = 1;
+}
