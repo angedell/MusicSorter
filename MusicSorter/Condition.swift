@@ -20,6 +20,10 @@ enum Condition: Codable, Hashable {
     case releasedInYear(Int)
     /// The decade is given by its first year, e.g. 1990 for 1990–1999.
     case releasedInDecade(Int)
+    /// Met when the Song's First Seen in `source` falls in the period. With no source, the
+    /// Song's earliest First Seen in any Source Playlist is used. Either way the date never
+    /// changes once recorded, so a Song can't stop meeting this Condition.
+    case firstSeen(FirstSeenPeriod, in: SourcePlaylist?)
 
     func isMet(by song: LibrarySong) -> Bool {
         switch self {
@@ -36,6 +40,16 @@ enum Condition: Codable, Hashable {
             Self.releaseYear(of: song) == year
         case .releasedInDecade(let decade):
             Self.releaseYear(of: song).map { $0 / 10 * 10 == decade } ?? false
+        case .firstSeen(let period, let source):
+            Self.firstSeen(of: song, in: source).map(period.contains) ?? false
+        }
+    }
+
+    private static func firstSeen(of song: LibrarySong, in source: SourcePlaylist?) -> Date? {
+        if let source {
+            song.firstSeen[source]
+        } else {
+            song.firstSeen.values.min()
         }
     }
 
@@ -65,6 +79,60 @@ enum Condition: Codable, Hashable {
         case .artistIs(let artist): "By \(artist)"
         case .releasedInYear(let year): "Released in \(String(year))"
         case .releasedInDecade(let decade): "Released in the \(String(decade))s"
+        case .firstSeen(let period, let source):
+            if let source {
+                "First seen in \(source.displayName) \(period.summary)"
+            } else {
+                "First seen \(period.summary)"
+            }
+        }
+    }
+}
+
+/// When a First Seen Condition's Songs were first seen. First Seen is a moment in the
+/// user's own life, so years and days are read in the time zone the user was in when they
+/// made the Rule. That time zone is kept with the period: reading it in whatever time zone
+/// the device is in now would let a Song first seen near midnight stop meeting the
+/// Condition after the user travels (ADR 0001).
+struct FirstSeenPeriod: Codable, Hashable {
+    enum Span: Codable, Hashable {
+        case year(Int)
+        /// Both days are included, whatever their time of day.
+        case between(firstDay: Date, lastDay: Date)
+    }
+
+    var span: Span
+    var timeZone: TimeZone
+
+    static func year(_ year: Int, in timeZone: TimeZone = .current) -> Self {
+        Self(span: .year(year), timeZone: timeZone)
+    }
+
+    static func between(firstDay: Date, lastDay: Date, in timeZone: TimeZone = .current) -> Self {
+        Self(span: .between(firstDay: firstDay, lastDay: lastDay), timeZone: timeZone)
+    }
+
+    func contains(_ date: Date) -> Bool {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        switch span {
+        case .year(let year):
+            return calendar.component(.year, from: date) == year
+        case .between(let firstDay, let lastDay):
+            guard let dayAfterLast = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: lastDay)) else {
+                return false
+            }
+            return calendar.startOfDay(for: firstDay) <= date && date < dayAfterLast
+        }
+    }
+
+    var summary: String {
+        switch span {
+        case .year(let year):
+            return "in \(String(year))"
+        case .between(let firstDay, let lastDay):
+            let style = Date.FormatStyle(date: .abbreviated, time: .omitted, timeZone: timeZone)
+            return "between \(firstDay.formatted(style)) and \(lastDay.formatted(style))"
         }
     }
 }

@@ -96,6 +96,24 @@ final class Placement {
     }
 }
 
+/// The moment the app first found a Song in a Source Playlist. Recorded once per Song and
+/// Source Playlist and never changed, even if the Song leaves the playlist and comes back.
+@Model
+final class FirstSeen {
+    var songID: String = ""
+    var sourceRawValue: String = ""
+    var firstSeenAt: Date = Date.distantPast
+
+    init(songID: String, source: SourcePlaylist, firstSeenAt: Date) {
+        self.songID = songID
+        self.sourceRawValue = source.rawValue
+        self.firstSeenAt = firstSeenAt
+    }
+
+    /// `nil` if the stored Source Playlist isn't one this version of the app knows.
+    var source: SourcePlaylist? { SourcePlaylist(rawValue: sourceRawValue) }
+}
+
 /// App-wide state; there is at most one instance.
 @Model
 final class AppState {
@@ -124,6 +142,7 @@ enum MusicSorterSchema {
         Rule.self,
         SortedPlaylistRecord.self,
         Placement.self,
+        FirstSeen.self,
         AppState.self,
     ]
 }

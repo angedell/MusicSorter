@@ -37,6 +37,10 @@ struct LibrarySong: Hashable, Sendable {
     /// The Source Playlists the Song was found in. Filled in by the Sorting Engine when it
     /// merges the Source Playlists; gateways leave it empty.
     var sources: Set<SourcePlaylist> = []
+    /// When the app first found the Song in each Source Playlist it has ever been in,
+    /// including ones it has since left. Filled in by the Sorting Engine; gateways leave
+    /// it empty.
+    var firstSeen: [SourcePlaylist: Date] = [:]
 }
 
 /// The app's only connection to the Apple Music library, and the only test seam.

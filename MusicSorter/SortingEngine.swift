@@ -27,7 +27,8 @@ struct SortingEngine {
 
     func run(now: Date) async throws -> SortingRunSummary {
         var summary = SortingRunSummary()
-        let (songs, missingSources) = try await currentSongs()
+        var (songs, missingSources) = try await currentSongs()
+        try recordFirstSeen(of: &songs, now: now)
         if missingSources.contains(.myShazamTracks) {
             summary.warnings.append(.shazamPlaylistMissing)
         }
@@ -72,8 +73,29 @@ struct SortingEngine {
         return summary
     }
 
-    /// The Songs of every Source Playlist, each Song once (by catalog ID) in first-seen
-    /// order and carrying every Source Playlist it was found in, plus the Source Playlists
+    /// Records First Seen as `now` for each Song and Source Playlist pair not seen before,
+    /// and fills in every Song's First Seen dates, including those of Source Playlists it
+    /// has since left. Saved before any Rule is applied, so it survives an interrupted run.
+    private func recordFirstSeen(of songs: inout [LibrarySong], now: Date) throws {
+        var firstSeenBySongID: [String: [SourcePlaylist: Date]] = [:]
+        for record in try modelContext.fetch(FetchDescriptor<FirstSeen>()) {
+            guard let source = record.source else { continue }
+            firstSeenBySongID[record.songID, default: [:]][source] = record.firstSeenAt
+        }
+        for index in songs.indices {
+            let song = songs[index]
+            var firstSeen = firstSeenBySongID[song.id] ?? [:]
+            for source in song.sources where firstSeen[source] == nil {
+                modelContext.insert(FirstSeen(songID: song.id, source: source, firstSeenAt: now))
+                firstSeen[source] = now
+            }
+            songs[index].firstSeen = firstSeen
+        }
+        try modelContext.save()
+    }
+
+    /// The Songs of every Source Playlist, each Song once (by catalog ID) in the order
+    /// found and carrying every Source Playlist it was found in, plus the Source Playlists
     /// that don't exist.
     private func currentSongs() async throws -> (songs: [LibrarySong], missing: Set<SourcePlaylist>) {
         var indexByID: [String: Int] = [:]

@@ -7,7 +7,7 @@ import SwiftData
 import SwiftUI
 
 /// Creates a Rule from any combination of Conditions: play count, Source Playlist, genre,
-/// artist and release decade or year.
+/// artist, release decade or year and First Seen.
 struct NewRuleView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -17,6 +17,13 @@ struct NewRuleView: View {
         case any
         case decade
         case year
+    }
+
+    /// Which First Seen Condition, if any, the Rule has.
+    private enum FirstSeenOption: Hashable {
+        case any
+        case year
+        case between
     }
 
     @State private var name = ""
@@ -29,6 +36,10 @@ struct NewRuleView: View {
     @State private var releaseOption = ReleaseOption.any
     @State private var releaseDecade = 1990
     @State private var releaseYear = Calendar.current.component(.year, from: .now)
+    @State private var firstSeenOption = FirstSeenOption.any
+    @State private var firstSeenYear = Calendar.current.component(.year, from: .now)
+    @State private var firstSeenFirstDay = Date.now
+    @State private var firstSeenLastDay = Date.now
 
     private static let latestYear = Calendar.current.component(.year, from: .now) + 1
 
@@ -56,6 +67,13 @@ struct NewRuleView: View {
         case .any: break
         case .decade: conditions.append(.releasedInDecade(releaseDecade))
         case .year: conditions.append(.releasedInYear(releaseYear))
+        }
+        // With a Source Playlist chosen, First Seen is read for that playlist, so
+        // "My Shazam Tracks" plus "First Seen in 2026" means "Shazamed in 2026".
+        switch firstSeenOption {
+        case .any: break
+        case .year: conditions.append(.firstSeen(.year(firstSeenYear), in: source))
+        case .between: conditions.append(.firstSeen(.between(firstDay: firstSeenFirstDay, lastDay: firstSeenLastDay), in: source))
         }
         return conditions
     }
@@ -108,6 +126,27 @@ struct NewRuleView: View {
                             value: $releaseYear,
                             in: 1900...Self.latestYear
                         )
+                    }
+                    Picker("First Seen", selection: $firstSeenOption) {
+                        Text("Any Time").tag(FirstSeenOption.any)
+                        Text("In a Year").tag(FirstSeenOption.year)
+                        Text("Between Dates").tag(FirstSeenOption.between)
+                    }
+                    switch firstSeenOption {
+                    case .any:
+                        EmptyView()
+                    case .year:
+                        Stepper(
+                            "In \(String(firstSeenYear))",
+                            value: $firstSeenYear,
+                            in: 2000...Self.latestYear
+                        )
+                    case .between:
+                        DatePicker("From", selection: $firstSeenFirstDay, displayedComponents: .date)
+                            .onChange(of: firstSeenFirstDay) {
+                                firstSeenLastDay = max(firstSeenLastDay, firstSeenFirstDay)
+                            }
+                        DatePicker("To", selection: $firstSeenLastDay, in: firstSeenFirstDay..., displayedComponents: .date)
                     }
                 } header: {
                     Text("Conditions")
