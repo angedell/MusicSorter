@@ -28,6 +28,12 @@ struct LibrarySong: Hashable, Sendable {
     var title: String
     /// `nil` when the Song isn't in the user's library.
     var playCount: Int?
+    /// Every genre listed for the Song, in order, possibly including the catch-all "Music".
+    var genres: [String] = []
+    /// The Song's credited artist, or `nil` if Apple Music doesn't give one.
+    var artistName: String?
+    /// `nil` when Apple Music doesn't give a release date.
+    var releaseDate: Date?
     /// The Source Playlists the Song was found in. Filled in by the Sorting Engine when it
     /// merges the Source Playlists; gateways leave it empty.
     var sources: Set<SourcePlaylist> = []

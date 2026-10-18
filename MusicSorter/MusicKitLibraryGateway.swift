@@ -44,7 +44,14 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
                 continue
             }
             songsByCatalogID[catalogID] = song
-            songs.append(LibrarySong(id: catalogID, title: song.title, playCount: song.playCount))
+            songs.append(LibrarySong(
+                id: catalogID,
+                title: song.title,
+                playCount: song.playCount,
+                genres: song.genreNames,
+                artistName: song.artistName.isEmpty ? nil : song.artistName,
+                releaseDate: song.releaseDate
+            ))
         }
         return songs
     }

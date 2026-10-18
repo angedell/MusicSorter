@@ -6,25 +6,56 @@
 import SwiftData
 import SwiftUI
 
-/// Creates a Rule with a "played at least N times" Condition and, optionally, a
-/// "Source Playlist is …" Condition.
+/// Creates a Rule from any combination of Conditions: play count, Source Playlist, genre,
+/// artist and release decade or year.
 struct NewRuleView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    /// Which release Condition, if any, the Rule has.
+    private enum ReleaseOption: Hashable {
+        case any
+        case decade
+        case year
+    }
+
     @State private var name = ""
+    @State private var requiresPlayCount = true
     @State private var minimumPlayCount = 10
     /// `nil` means Songs from any Source Playlist.
     @State private var source: SourcePlaylist?
+    @State private var genre = ""
+    @State private var artist = ""
+    @State private var releaseOption = ReleaseOption.any
+    @State private var releaseDecade = 1990
+    @State private var releaseYear = Calendar.current.component(.year, from: .now)
+
+    private static let latestYear = Calendar.current.component(.year, from: .now) + 1
 
     private var trimmedName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var conditions: [Condition] {
-        var conditions: [Condition] = [.playCountAtLeast(minimumPlayCount)]
+        var conditions: [Condition] = []
+        if requiresPlayCount {
+            conditions.append(.playCountAtLeast(minimumPlayCount))
+        }
         if let source {
             conditions.append(.sourcePlaylistIs(source))
+        }
+        let genre = genre.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !genre.isEmpty {
+            conditions.append(.genreIs(genre))
+        }
+        let artist = artist.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !artist.isEmpty {
+            conditions.append(.artistIs(artist))
+        }
+        switch releaseOption {
+        case .any: break
+        case .decade: conditions.append(.releasedInDecade(releaseDecade))
+        case .year: conditions.append(.releasedInYear(releaseYear))
         }
         return conditions
     }
@@ -37,18 +68,53 @@ struct NewRuleView: View {
                 } footer: {
                     Text("The Sorted Playlist will be called \"\(Rule.sortedPlaylistName(forRuleNamed: trimmedName.isEmpty ? "Name" : trimmedName))\".")
                 }
-                Section("Conditions") {
-                    Stepper(
-                        "Played at least \(minimumPlayCount) times",
-                        value: $minimumPlayCount,
-                        in: 1...9_999
-                    )
+                Section {
+                    Toggle("Play Count", isOn: $requiresPlayCount)
+                    if requiresPlayCount {
+                        Stepper(
+                            "Played at least \(minimumPlayCount) times",
+                            value: $minimumPlayCount,
+                            in: 1...9_999
+                        )
+                    }
                     Picker("Source Playlist", selection: $source) {
                         Text("Any").tag(SourcePlaylist?.none)
                         ForEach(SourcePlaylist.allCases, id: \.self) { source in
                             Text(source.displayName).tag(SourcePlaylist?.some(source))
                         }
                     }
+                    TextField("Genre (any)", text: $genre)
+                        .autocorrectionDisabled()
+                    TextField("Artist (any)", text: $artist)
+                        .autocorrectionDisabled()
+                    Picker("Released", selection: $releaseOption) {
+                        Text("Any Time").tag(ReleaseOption.any)
+                        Text("In a Decade").tag(ReleaseOption.decade)
+                        Text("In a Year").tag(ReleaseOption.year)
+                    }
+                    switch releaseOption {
+                    case .any:
+                        EmptyView()
+                    case .decade:
+                        Stepper(
+                            "The \(String(releaseDecade))s",
+                            value: $releaseDecade,
+                            in: 1900...(Self.latestYear / 10 * 10),
+                            step: 10
+                        )
+                    case .year:
+                        Stepper(
+                            "In \(String(releaseYear))",
+                            value: $releaseYear,
+                            in: 1900...Self.latestYear
+                        )
+                    }
+                } header: {
+                    Text("Conditions")
+                } footer: {
+                    // ADR 0001: Sorted Playlists can only grow, so ranked or relative
+                    // Conditions would leave stale Songs behind.
+                    Text("A Song must meet every Condition. Conditions are limited to ones a Song can't stop meeting, so there's no \"top 25\" or \"recently played\": MusicSorter can't take Songs back out of a Sorted Playlist.")
                 }
             }
             .navigationTitle("New Rule")
@@ -66,7 +132,8 @@ struct NewRuleView: View {
                         ))
                         dismiss()
                     }
-                    .disabled(trimmedName.isEmpty)
+                    // A Rule with no Conditions would place every Song, for good.
+                    .disabled(trimmedName.isEmpty || conditions.isEmpty)
                 }
             }
         }
