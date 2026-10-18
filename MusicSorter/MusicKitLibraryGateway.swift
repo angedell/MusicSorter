@@ -150,6 +150,7 @@ private extension SourcePlaylist {
     var libraryName: String {
         switch self {
         case .favoriteSongs: "Favorite Songs"
+        case .myShazamTracks: "My Shazam Tracks"
         }
     }
 }

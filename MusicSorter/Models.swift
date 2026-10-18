@@ -100,6 +100,9 @@ final class Placement {
 @Model
 final class AppState {
     var lastSortingRunAt: Date?
+    /// Whether the last Sorting Run found no "My Shazam Tracks" playlist. The app shows
+    /// how to turn on "Sync to Apple Music" in Shazam while this is set.
+    var isShazamPlaylistMissing: Bool = false
 
     init(lastSortingRunAt: Date? = nil) {
         self.lastSortingRunAt = lastSortingRunAt

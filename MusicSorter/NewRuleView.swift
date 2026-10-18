@@ -6,16 +6,27 @@
 import SwiftData
 import SwiftUI
 
-/// Creates a Rule with a single "played at least N times" Condition.
+/// Creates a Rule with a "played at least N times" Condition and, optionally, a
+/// "Source Playlist is …" Condition.
 struct NewRuleView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     @State private var name = ""
     @State private var minimumPlayCount = 10
+    /// `nil` means Songs from any Source Playlist.
+    @State private var source: SourcePlaylist?
 
     private var trimmedName: String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var conditions: [Condition] {
+        var conditions: [Condition] = [.playCountAtLeast(minimumPlayCount)]
+        if let source {
+            conditions.append(.sourcePlaylistIs(source))
+        }
+        return conditions
     }
 
     var body: some View {
@@ -26,12 +37,18 @@ struct NewRuleView: View {
                 } footer: {
                     Text("The Sorted Playlist will be called \"\(Rule.sortedPlaylistName(forRuleNamed: trimmedName.isEmpty ? "Name" : trimmedName))\".")
                 }
-                Section("Condition") {
+                Section("Conditions") {
                     Stepper(
                         "Played at least \(minimumPlayCount) times",
                         value: $minimumPlayCount,
                         in: 1...9_999
                     )
+                    Picker("Source Playlist", selection: $source) {
+                        Text("Any").tag(SourcePlaylist?.none)
+                        ForEach(SourcePlaylist.allCases, id: \.self) { source in
+                            Text(source.displayName).tag(SourcePlaylist?.some(source))
+                        }
+                    }
                 }
             }
             .navigationTitle("New Rule")
@@ -44,7 +61,7 @@ struct NewRuleView: View {
                     Button("Add", role: .confirm) {
                         modelContext.insert(Rule(
                             name: trimmedName,
-                            conditions: [.playCountAtLeast(minimumPlayCount)],
+                            conditions: conditions,
                             createdAt: .now
                         ))
                         dismiss()

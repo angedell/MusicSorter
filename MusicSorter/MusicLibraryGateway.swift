@@ -8,6 +8,17 @@ import Foundation
 /// The Source Playlists the app reads from.
 enum SourcePlaylist: String, Codable, CaseIterable {
     case favoriteSongs
+    /// Kept up to date by the Shazam app when "Sync to Apple Music" is on (ADR 0002).
+    case myShazamTracks
+
+    /// How the Source Playlist reads in the UI. Kept apart from the name the gateway looks
+    /// the playlist up by, which may differ by library language (#14).
+    var displayName: String {
+        switch self {
+        case .favoriteSongs: "Favorite Songs"
+        case .myShazamTracks: "My Shazam Tracks"
+        }
+    }
 }
 
 /// A Song as read from a Source Playlist.
@@ -17,6 +28,9 @@ struct LibrarySong: Hashable, Sendable {
     var title: String
     /// `nil` when the Song isn't in the user's library.
     var playCount: Int?
+    /// The Source Playlists the Song was found in. Filled in by the Sorting Engine when it
+    /// merges the Source Playlists; gateways leave it empty.
+    var sources: Set<SourcePlaylist> = []
 }
 
 /// The app's only connection to the Apple Music library, and the only test seam.

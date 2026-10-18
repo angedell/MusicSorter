@@ -6,10 +6,17 @@
 import Foundation
 import SwiftData
 
+/// Something the user should know about a Sorting Run that still completed.
+enum SortingRunWarning: Equatable {
+    /// "My Shazam Tracks" doesn't exist, so only Favorite Songs were sorted.
+    case shazamPlaylistMissing
+}
+
 /// What a Sorting Run did.
 struct SortingRunSummary: Equatable {
     var placementCount: Int = 0
     var createdPlaylistCount: Int = 0
+    var warnings: [SortingRunWarning] = []
 }
 
 /// Runs Sorting Runs: reads the Source Playlists, applies every active Rule and records
@@ -20,7 +27,10 @@ struct SortingEngine {
 
     func run(now: Date) async throws -> SortingRunSummary {
         var summary = SortingRunSummary()
-        let songs = try await currentSongs()
+        let (songs, missingSources) = try await currentSongs()
+        if missingSources.contains(.myShazamTracks) {
+            summary.warnings.append(.shazamPlaylistMissing)
+        }
 
         let rules = try modelContext.fetch(FetchDescriptor<Rule>(sortBy: [SortDescriptor(\.createdAt)]))
         for rule in rules where rule.status == .active {
@@ -55,20 +65,36 @@ struct SortingEngine {
             }
         }
 
-        try AppState.current(in: modelContext).lastSortingRunAt = now
+        let state = try AppState.current(in: modelContext)
+        state.lastSortingRunAt = now
+        state.isShazamPlaylistMissing = summary.warnings.contains(.shazamPlaylistMissing)
         try modelContext.save()
         return summary
     }
 
-    /// The Songs of every Source Playlist, each Song once, in first-seen order.
-    private func currentSongs() async throws -> [LibrarySong] {
-        var seen = Set<String>()
+    /// The Songs of every Source Playlist, each Song once (by catalog ID) in first-seen
+    /// order and carrying every Source Playlist it was found in, plus the Source Playlists
+    /// that don't exist.
+    private func currentSongs() async throws -> (songs: [LibrarySong], missing: Set<SourcePlaylist>) {
+        var indexByID: [String: Int] = [:]
         var songs: [LibrarySong] = []
+        var missing = Set<SourcePlaylist>()
         for source in SourcePlaylist.allCases {
-            for song in try await gateway.songs(in: source) ?? [] where seen.insert(song.id).inserted {
-                songs.append(song)
+            guard let sourceSongs = try await gateway.songs(in: source) else {
+                missing.insert(source)
+                continue
+            }
+            for song in sourceSongs {
+                if let index = indexByID[song.id] {
+                    songs[index].sources.insert(source)
+                } else {
+                    indexByID[song.id] = songs.count
+                    var song = song
+                    song.sources = [source]
+                    songs.append(song)
+                }
             }
         }
-        return songs
+        return (songs, missing)
     }
 }

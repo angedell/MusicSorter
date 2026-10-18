@@ -15,12 +15,27 @@ final class FakeMusicLibrary: MusicLibraryGateway {
         var songIDs: [String]
     }
 
-    var sourcePlaylists: [SourcePlaylist: [LibrarySong]] = [:]
+    /// Every Source Playlist exists, empty, until a test fills or removes it.
+    private var sourcePlaylists: [SourcePlaylist: [LibrarySong]] = [
+        .favoriteSongs: [],
+        .myShazamTracks: [],
+    ]
     private(set) var playlists: [FakePlaylist] = []
 
     var favorites: [LibrarySong] {
         get { sourcePlaylists[.favoriteSongs] ?? [] }
         set { sourcePlaylists[.favoriteSongs] = newValue }
+    }
+
+    var shazamSongs: [LibrarySong] {
+        get { sourcePlaylists[.myShazamTracks] ?? [] }
+        set { sourcePlaylists[.myShazamTracks] = newValue }
+    }
+
+    /// Simulates a Source Playlist that doesn't exist, e.g. "My Shazam Tracks" when
+    /// "Sync to Apple Music" is off in Shazam.
+    func removeSourcePlaylist(_ source: SourcePlaylist) {
+        sourcePlaylists[source] = nil
     }
 
     /// The Song IDs in the playlist currently carrying `name`, or `nil` if there is none.

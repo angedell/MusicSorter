@@ -21,6 +21,11 @@ struct RuleListView: View {
     var body: some View {
         NavigationStack {
             List {
+                if appStates.first?.isShazamPlaylistMissing == true {
+                    Section {
+                        ShazamSyncBanner()
+                    }
+                }
                 Section {
                     ForEach(rules) { rule in
                         RuleRow(rule: rule)
@@ -34,7 +39,7 @@ struct RuleListView: View {
                     ContentUnavailableView(
                         "No Rules",
                         systemImage: "line.3.horizontal.decrease",
-                        description: Text("Add a Rule to start sorting your Favorite Songs.")
+                        description: Text("Add a Rule to start sorting your Favorite Songs and Shazams.")
                     )
                 }
             }
@@ -85,7 +90,7 @@ struct RuleListView: View {
         let start = ContinuousClock.now
         do {
             let summary = try await SortingEngine(gateway: gateway, modelContext: modelContext).run(now: .now)
-            Self.logger.info("Sorting Run placed \(summary.placementCount) songs, created \(summary.createdPlaylistCount) playlists, in \(ContinuousClock.now - start)")
+            Self.logger.info("Sorting Run placed \(summary.placementCount) songs, created \(summary.createdPlaylistCount) playlists, with \(summary.warnings.count) warnings, in \(ContinuousClock.now - start)")
         } catch {
             sortError = error.localizedDescription
         }
@@ -115,6 +120,23 @@ private struct RuleRow: View {
             return "Sorted Playlist created on the next sort"
         }
         return "\(rule.sortedPlaylistName): \(playlist.songCount) songs"
+    }
+}
+
+/// Shown while the last Sorting Run found no "My Shazam Tracks" playlist (ADR 0002).
+private struct ShazamSyncBanner: View {
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Shazams aren't being sorted")
+                    .font(.headline)
+                Text("MusicSorter couldn't find \"My Shazam Tracks\", so only Favorite Songs were sorted. In the Shazam app, open Settings and turn on Sync to Apple Music. Your Shazams will be sorted on the next run.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: "shazam.logo")
+        }
     }
 }
 

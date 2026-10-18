@@ -11,12 +11,15 @@ import Foundation
 /// lives in this file.
 enum Condition: Codable, Hashable {
     case playCountAtLeast(Int)
+    case sourcePlaylistIs(SourcePlaylist)
 
     func isMet(by song: LibrarySong) -> Bool {
         switch self {
         case .playCountAtLeast(let minimum):
             // Songs not in the library have no play count and count as 0 plays.
             (song.playCount ?? 0) >= minimum
+        case .sourcePlaylistIs(let source):
+            song.sources.contains(source)
         }
     }
 
@@ -24,6 +27,7 @@ enum Condition: Codable, Hashable {
     var summary: String {
         switch self {
         case .playCountAtLeast(let count): "Played at least \(count) times"
+        case .sourcePlaylistIs(let source): "In \(source.displayName)"
         }
     }
 }
