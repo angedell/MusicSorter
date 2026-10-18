@@ -24,21 +24,35 @@ struct SortingEngine {
 
         let rules = try modelContext.fetch(FetchDescriptor<Rule>(sortBy: [SortDescriptor(\.createdAt)]))
         for rule in rules where rule.status == .active {
-            let record = try await sortedPlaylist(for: rule, now: now, summary: &summary)
-            let alreadyPlaced = Set((record.placements ?? []).map(\.songID))
-            let newSongIDs = songs
-                .filter { !alreadyPlaced.contains($0.id) && rule.isMet(by: $0) }
-                .map(\.id)
-            guard !newSongIDs.isEmpty else { continue }
+            let matchingSongIDs = songs.filter { rule.isMet(by: $0) }.map(\.id)
 
-            // Placements are written only after the add succeeds, so an interrupted run
-            // resumes without duplicates.
-            try await gateway.append(songIDs: newSongIDs, toPlaylistWithID: record.playlistID)
-            for songID in newSongIDs {
-                modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
+            guard let record = rule.currentSortedPlaylist else {
+                // A new Sorted Playlist is created already holding its Songs: one MusicKit
+                // call instead of one slow add per Song.
+                let playlistID = try await gateway.createPlaylist(
+                    named: rule.sortedPlaylistName,
+                    songIDs: matchingSongIDs
+                )
+                let record = SortedPlaylistRecord(rule: rule, playlistID: playlistID, createdAt: now)
+                modelContext.insert(record)
+                for songID in matchingSongIDs {
+                    modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
+                }
+                try modelContext.save()
+                summary.createdPlaylistCount += 1
+                summary.placementCount += matchingSongIDs.count
+                continue
             }
-            try modelContext.save()
-            summary.placementCount += newSongIDs.count
+
+            let alreadyPlaced = Set((record.placements ?? []).map(\.songID))
+            // Each Placement is written right after its add succeeds, so an interrupted run
+            // resumes without duplicates.
+            for songID in matchingSongIDs where !alreadyPlaced.contains(songID) {
+                try await gateway.append(songID: songID, toPlaylistWithID: record.playlistID)
+                modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
+                try modelContext.save()
+                summary.placementCount += 1
+            }
         }
 
         try AppState.current(in: modelContext).lastSortingRunAt = now
@@ -56,40 +70,5 @@ struct SortingEngine {
             }
         }
         return songs
-    }
-
-    /// The Rule's current Sorted Playlist, created in Apple Music if the Rule has none yet.
-    private func sortedPlaylist(
-        for rule: Rule,
-        now: Date,
-        summary: inout SortingRunSummary
-    ) async throws -> SortedPlaylistRecord {
-        if let existing = rule.sortedPlaylists?.max(by: { $0.createdAt < $1.createdAt }) {
-            return existing
-        }
-        let playlistID = try await gateway.createPlaylist(named: "\(rule.name) · Sorted")
-        let record = SortedPlaylistRecord(rule: rule, playlistID: playlistID, createdAt: now)
-        modelContext.insert(record)
-        // Saved straight away so a failure later in the run can't lead to a second playlist.
-        try modelContext.save()
-        summary.createdPlaylistCount += 1
-        return record
-    }
-}
-
-extension Rule {
-    /// Whether the Song meets every one of the Rule's Conditions.
-    func isMet(by song: LibrarySong) -> Bool {
-        conditions.allSatisfy { $0.isMet(by: song) }
-    }
-}
-
-extension Condition {
-    func isMet(by song: LibrarySong) -> Bool {
-        switch self {
-        case .playCountAtLeast(let minimum):
-            // Songs not in the library have no play count and count as 0 plays.
-            (song.playCount ?? 0) >= minimum
-        }
     }
 }

@@ -6,11 +6,6 @@
 import Foundation
 import SwiftData
 
-/// One test within a Rule. Only Conditions a Song can't stop meeting are allowed (ADR 0001).
-enum Condition: Codable, Hashable {
-    case playCountAtLeast(Int)
-}
-
 /// A user-defined set of Conditions, all of which a Song must meet to be placed into the
 /// Rule's Sorted Playlist.
 ///
@@ -43,8 +38,25 @@ final class Rule {
     }
 
     var conditions: [Condition] {
-        get { (try? JSONDecoder().decode([Condition].self, from: conditionsData)) ?? [] }
+        get { storedConditions ?? [] }
         set { conditionsData = (try? JSONEncoder().encode(newValue)) ?? Data() }
+    }
+
+    /// The decoded Conditions, or `nil` if the stored data can't be read.
+    var storedConditions: [Condition]? {
+        try? JSONDecoder().decode([Condition].self, from: conditionsData)
+    }
+
+    /// The name a Sorted Playlist is created with for a Rule called `ruleName`.
+    static func sortedPlaylistName(forRuleNamed ruleName: String) -> String {
+        "\(ruleName) · Sorted"
+    }
+
+    var sortedPlaylistName: String { Self.sortedPlaylistName(forRuleNamed: name) }
+
+    /// The Sorted Playlist the Rule currently places Songs into, if it has one yet.
+    var currentSortedPlaylist: SortedPlaylistRecord? {
+        sortedPlaylists?.max(by: { $0.createdAt < $1.createdAt })
     }
 }
 

@@ -24,9 +24,11 @@ protocol MusicLibraryGateway {
     /// The Songs of a Source Playlist, or `nil` if the playlist doesn't exist.
     func songs(in source: SourcePlaylist) async throws -> [LibrarySong]?
 
-    /// Creates a playlist with the given name and returns its ID.
-    func createPlaylist(named name: String) async throws -> String
+    /// Creates a playlist with the given name, holding the given Songs in order, and
+    /// returns its ID. Either the playlist is created with all the Songs, or not at all.
+    func createPlaylist(named name: String, songIDs: [String]) async throws -> String
 
-    /// Appends Songs, in order, to the end of the playlist with the given ID.
-    func append(songIDs: [String], toPlaylistWithID playlistID: String) async throws
+    /// Appends a Song to the end of the playlist with the given ID. MusicKit adds one item
+    /// at a time, so each append either fully succeeds or adds nothing.
+    func append(songID: String, toPlaylistWithID playlistID: String) async throws
 }

@@ -95,6 +95,18 @@ struct PlayCountRuleTests {
         #expect(library.songIDs(inPlaylistNamed: "Played Once · Sorted") == [])
     }
 
+    @Test func ruleWhoseConditionsCannotBeReadPlacesNothing() async throws {
+        library.favorites = [song("A", plays: 12)]
+        let rule = addRule("Heavy Rotation", playedAtLeast: 10)
+        rule.conditionsData = Data("not conditions".utf8)
+
+        let summary = try await sort()
+
+        // A Condition that can't be checked counts as not met, so nothing is placed.
+        #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == [])
+        #expect(summary.placementCount == 0)
+    }
+
     @Test func songThatStartsMatchingLaterIsAppendedToTheEnd() async throws {
         library.favorites = [song("A", plays: 12), song("B", plays: 9)]
         addRule("Heavy Rotation", playedAtLeast: 10)
@@ -145,6 +157,37 @@ struct PlayCountRuleTests {
 
         #expect(library.playlists.count == 1)
         #expect(library.songIDs(inPlaylistNamed: "My Bangers") == ["A", "B"])
+        #expect(summary == SortingRunSummary(placementCount: 1, createdPlaylistCount: 0))
+    }
+
+    @Test func newRulesSortedPlaylistIsCreatedHoldingItsSongs() async throws {
+        library.favorites = [song("A", plays: 12), song("B", plays: 20)]
+        addRule("Heavy Rotation", playedAtLeast: 10)
+
+        try await sort()
+
+        // Adding to a playlist one Song at a time is slow in MusicKit (~2 s per Song),
+        // so a new Sorted Playlist must be created with its Songs in one go.
+        #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B"])
+        #expect(library.appendCount == 0)
+    }
+
+    @Test func interruptedRunResumesWithoutDuplicates() async throws {
+        library.favorites = [song("A", plays: 12)]
+        addRule("Heavy Rotation", playedAtLeast: 10)
+        try await sort()
+
+        library.favorites += [song("B", plays: 20), song("C", plays: 30)]
+        library.appendsBeforeFailure = 1
+        await #expect(throws: FakeMusicLibrary.FakeError.interrupted) {
+            try await sort()
+        }
+        #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B"])
+
+        let summary = try await sort()
+
+        #expect(library.playlists.count == 1)
+        #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B", "C"])
         #expect(summary == SortingRunSummary(placementCount: 1, createdPlaylistCount: 0))
     }
 

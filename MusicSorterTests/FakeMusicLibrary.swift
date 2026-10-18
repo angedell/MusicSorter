@@ -46,20 +46,36 @@ final class FakeMusicLibrary: MusicLibraryGateway {
         sourcePlaylists[source]
     }
 
-    func createPlaylist(named name: String) async throws -> String {
+    func createPlaylist(named name: String, songIDs: [String]) async throws -> String {
         let id = "p.\(playlists.count + 1)"
-        playlists.append(FakePlaylist(id: id, name: name, songIDs: []))
+        playlists.append(FakePlaylist(id: id, name: name, songIDs: songIDs))
         return id
     }
 
-    func append(songIDs: [String], toPlaylistWithID playlistID: String) async throws {
+    /// How many times `append` succeeded.
+    private(set) var appendCount = 0
+
+    func append(songID: String, toPlaylistWithID playlistID: String) async throws {
+        if let remaining = appendsBeforeFailure {
+            guard remaining > 0 else {
+                appendsBeforeFailure = nil
+                throw FakeError.interrupted
+            }
+            appendsBeforeFailure = remaining - 1
+        }
         guard let index = playlists.firstIndex(where: { $0.id == playlistID }) else {
             throw FakeError.noSuchPlaylist
         }
-        playlists[index].songIDs.append(contentsOf: songIDs)
+        playlists[index].songIDs.append(songID)
+        appendCount += 1
     }
+
+    /// When set, this many appends succeed and the next one fails, simulating a run that
+    /// is interrupted part-way (e.g. background time expiring).
+    var appendsBeforeFailure: Int?
 
     enum FakeError: Error {
         case noSuchPlaylist
+        case interrupted
     }
 }
