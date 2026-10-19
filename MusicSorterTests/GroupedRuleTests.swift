@@ -95,7 +95,7 @@ struct GroupedRuleTests {
         #expect(library.playlists.map(\.name) == ["Jazz · Sorted"])
         #expect(library.songIDs(inPlaylistNamed: "Jazz · Sorted") == ["A", "B", "C", "D", "E"])
         #expect(library.appendCount == 0)
-        #expect(summary == SortingRunSummary(placementCount: 5, createdPlaylistCount: 1))
+        #expect(summary == SortingRunSummary(placementCount: 5, placedIntoPlaylistCount: 1, createdPlaylistCount: 1))
     }
 
     @Test func songsJoiningAnExistingGroupAreAppended() async throws {
@@ -108,7 +108,7 @@ struct GroupedRuleTests {
 
         #expect(library.songIDs(inPlaylistNamed: "Jazz · Sorted") == ["A", "B", "C"])
         #expect(library.appendCount == 1)
-        #expect(summary == SortingRunSummary(placementCount: 1))
+        #expect(summary == SortingRunSummary(placementCount: 1, placedIntoPlaylistCount: 1))
     }
 
     @Test func groupPlaylistStaysOnceCreatedEvenIfTheGroupShrinks() async throws {

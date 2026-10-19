@@ -18,6 +18,8 @@ enum SortingRunWarning: Equatable {
 /// What a Sorting Run did.
 struct SortingRunSummary: Equatable {
     var placementCount: Int = 0
+    /// The Sorted Playlists that received at least one Placement.
+    var placedIntoPlaylistCount: Int = 0
     var createdPlaylistCount: Int = 0
     var warnings: [SortingRunWarning] = []
 }
@@ -114,6 +116,9 @@ struct SortingEngine {
         try modelContext.save()
         summary.createdPlaylistCount += 1
         summary.placementCount += songIDs.count
+        if !songIDs.isEmpty {
+            summary.placedIntoPlaylistCount += 1
+        }
     }
 
     /// Appends the Songs not yet placed in the Sorted Playlist. Each Placement is written
@@ -125,11 +130,16 @@ struct SortingEngine {
         summary: inout SortingRunSummary
     ) async throws {
         let alreadyPlaced = Set((record.placements ?? []).map(\.songID))
-        for songID in songIDs where !alreadyPlaced.contains(songID) {
+        let newSongIDs = songIDs.filter { !alreadyPlaced.contains($0) }
+        for (index, songID) in newSongIDs.enumerated() {
             try await uncancellable { try await gateway.append(songID: songID, toPlaylistWithID: record.playlistID) }
             modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
             try modelContext.save()
             summary.placementCount += 1
+            // Counted once its first Song is placed, so an interrupted run still reports it.
+            if index == 0 {
+                summary.placedIntoPlaylistCount += 1
+            }
         }
     }
 

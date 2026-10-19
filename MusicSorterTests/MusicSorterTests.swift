@@ -50,7 +50,7 @@ struct PlayCountRuleTests {
 
         #expect(library.playlists.map(\.name) == ["Heavy Rotation · Sorted"])
         #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "C"])
-        #expect(summary == SortingRunSummary(placementCount: 2, createdPlaylistCount: 1))
+        #expect(summary == SortingRunSummary(placementCount: 2, placedIntoPlaylistCount: 1, createdPlaylistCount: 1))
     }
 
     @Test func ruleWithNoMatchingSongsStillCreatesItsSortedPlaylist() async throws {
@@ -116,7 +116,21 @@ struct PlayCountRuleTests {
         let summary = try await sort()
 
         #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B", "C"])
-        #expect(summary == SortingRunSummary(placementCount: 2, createdPlaylistCount: 0))
+        #expect(summary == SortingRunSummary(placementCount: 2, placedIntoPlaylistCount: 1, createdPlaylistCount: 0))
+    }
+
+    @Test func summaryCountsEachSortedPlaylistThatReceivedSongsOnce() async throws {
+        library.favorites = [song("A", plays: 1)]
+        addRule("Heavy Rotation", playedAtLeast: 10)
+        addRule("On Repeat", playedAtLeast: 20)
+        addRule("Obsessed", playedAtLeast: 100)
+        try await sort()
+
+        library.favorites = [song("A", plays: 1), song("B", plays: 15), song("C", plays: 30)]
+        let summary = try await sort()
+
+        // B and C go to Heavy Rotation, C to On Repeat; Obsessed gets nothing.
+        #expect(summary == SortingRunSummary(placementCount: 3, placedIntoPlaylistCount: 2, createdPlaylistCount: 0))
     }
 
     @Test func songRemovedByHandIsNotReAdded() async throws {
@@ -157,7 +171,7 @@ struct PlayCountRuleTests {
 
         #expect(library.playlists.count == 1)
         #expect(library.songIDs(inPlaylistNamed: "My Bangers") == ["A", "B"])
-        #expect(summary == SortingRunSummary(placementCount: 1, createdPlaylistCount: 0))
+        #expect(summary == SortingRunSummary(placementCount: 1, placedIntoPlaylistCount: 1, createdPlaylistCount: 0))
     }
 
     @Test func newRulesSortedPlaylistIsCreatedHoldingItsSongs() async throws {
@@ -188,7 +202,7 @@ struct PlayCountRuleTests {
 
         #expect(library.playlists.count == 1)
         #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B", "C"])
-        #expect(summary == SortingRunSummary(placementCount: 1, createdPlaylistCount: 0))
+        #expect(summary == SortingRunSummary(placementCount: 1, placedIntoPlaylistCount: 1, createdPlaylistCount: 0))
     }
 
     @Test func eachSortedPlaylistReportsItsSongCount() async throws {

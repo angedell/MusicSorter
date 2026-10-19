@@ -53,7 +53,7 @@ struct RuleEditingTests {
 
         #expect(library.playlists.map(\.name) == ["Heavy Rotation · Sorted"])
         #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B"])
-        #expect(summary == SortingRunSummary(placementCount: 1))
+        #expect(summary == SortingRunSummary(placementCount: 1, placedIntoPlaylistCount: 1))
     }
 
     @Test func tighteningARuleKeepsSongsAlreadyPlaced() async throws {
@@ -129,7 +129,7 @@ struct RuleEditingTests {
         let summary = try await sort()
 
         #expect(library.playlists.map(\.songIDs) == [["A", "B"], ["A"]])
-        #expect(summary == SortingRunSummary(placementCount: 1, createdPlaylistCount: 1))
+        #expect(summary == SortingRunSummary(placementCount: 1, placedIntoPlaylistCount: 1, createdPlaylistCount: 1))
         #expect(rule.currentSortedPlaylist?.playlistID == library.playlists.last?.id)
     }
 
@@ -171,7 +171,7 @@ struct RuleEditingTests {
         #expect(library.playlists.map(\.name) == ["Jazz · Sorted", "Rock · Sorted", "Jazz · Sorted", "Rock · Sorted"])
         #expect(library.playlists.map(\.songIDs) == [["A"], ["B"], ["A", "C"], ["B"]])
         #expect(library.appendCount == 0)
-        #expect(summary == SortingRunSummary(placementCount: 3, createdPlaylistCount: 2))
+        #expect(summary == SortingRunSummary(placementCount: 3, placedIntoPlaylistCount: 2, createdPlaylistCount: 2))
         #expect(rule.groupPlaylists.map(\.songCount) == [2, 1])
     }
 

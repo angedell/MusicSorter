@@ -6,7 +6,7 @@
 import SwiftData
 import SwiftUI
 
-/// The Rules, their Sorted Playlists' Song counts, "Last sorted" and "Sort now". A Rule is
+/// The Rules, their Sorted Playlists' Song counts, "Last sorted", "Sort now" and Settings. A Rule is
 /// edited by tapping it, and started over or deleted from its swipe actions or context menu.
 struct RuleListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,6 +15,7 @@ struct RuleListView: View {
 
     @Environment(SortingCoordinator.self) private var coordinator
     @State private var isAddingRule = false
+    @State private var isShowingSettings = false
     @State private var sortError: String?
     @State private var editedRule: Rule?
     @State private var ruleStartingOver: Rule?
@@ -89,6 +90,11 @@ struct RuleListView: View {
             }
             .navigationTitle("Rules")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Settings", systemImage: "gear") {
+                        isShowingSettings = true
+                    }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button("Add Rule", systemImage: "plus") {
                         isAddingRule = true
@@ -109,6 +115,9 @@ struct RuleListView: View {
             }
             .sheet(isPresented: $isAddingRule) {
                 RuleEditorView()
+            }
+            .sheet(isPresented: $isShowingSettings) {
+                SettingsView()
             }
             .sheet(item: $editedRule) { rule in
                 RuleEditorView(rule: rule)

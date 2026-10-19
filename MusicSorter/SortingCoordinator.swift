@@ -44,15 +44,17 @@ final class SortingCoordinator {
     }
 
     /// Runs a Sorting Run the user didn't ask for, logging rather than reporting a failure;
-    /// the next run picks up where this one stopped.
-    func sortAutomatically(reason: String) async {
+    /// the next run picks up where this one stopped. Returns what a completed run did.
+    @discardableResult
+    func sortAutomatically(reason: String) async -> SortingRunSummary? {
         do {
-            try await sort()
+            return try await sort()
         } catch is CancellationError {
             Logger.sortingRun.info("Sorting Run (\(reason, privacy: .public)) stopped before completing")
         } catch {
             Logger.sortingRun.error("Sorting Run (\(reason, privacy: .public)) failed: \(error.localizedDescription, privacy: .public)")
         }
+        return nil
     }
 
     /// Starts a Sorting Run once `previous`, a cancelled run that hasn't stopped yet, ends.
@@ -71,7 +73,7 @@ final class SortingCoordinator {
             _ = await previous?.result
             let start = ContinuousClock.now
             let summary = try await engine.run(now: now())
-            Logger.sortingRun.info("Sorting Run placed \(summary.placementCount) songs, created \(summary.createdPlaylistCount) playlists, with \(summary.warnings.count) warnings, in \(ContinuousClock.now - start)")
+            Logger.sortingRun.info("Sorting Run placed \(summary.placementCount) songs into \(summary.placedIntoPlaylistCount) playlists, created \(summary.createdPlaylistCount) playlists, with \(summary.warnings.count) warnings, in \(ContinuousClock.now - start)")
             return summary
         }
         currentRun = run

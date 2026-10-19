@@ -34,7 +34,7 @@ struct SortingCoordinatorTests {
         let summaries = try await [first, second]
 
         // A second run would have found nothing new to place.
-        let expected = SortingRunSummary(placementCount: 1, createdPlaylistCount: 1)
+        let expected = SortingRunSummary(placementCount: 1, placedIntoPlaylistCount: 1, createdPlaylistCount: 1)
         #expect(summaries == [expected, expected])
         #expect(library.playlists.count == 1)
     }
@@ -45,7 +45,7 @@ struct SortingCoordinatorTests {
 
         let summary = try await coordinator.sort()
 
-        #expect(summary == SortingRunSummary(placementCount: 1, createdPlaylistCount: 0))
+        #expect(summary == SortingRunSummary(placementCount: 1, placedIntoPlaylistCount: 1, createdPlaylistCount: 0))
         #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B"])
     }
 
@@ -82,7 +82,7 @@ struct SortingCoordinatorTests {
         let summary = try await #require(laterRequest).value
 
         // The cancelled run placed B before stopping; the new run places C.
-        #expect(summary == SortingRunSummary(placementCount: 1, createdPlaylistCount: 0))
+        #expect(summary == SortingRunSummary(placementCount: 1, placedIntoPlaylistCount: 1, createdPlaylistCount: 0))
         #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B", "C"])
         #expect(try AppState.current(in: container.mainContext).lastSortingRunAt == now)
     }

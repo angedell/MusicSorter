@@ -131,7 +131,7 @@ struct PausedRuleTests {
         #expect(rule.deletedSortedPlaylists.isEmpty)
         #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B"])
         #expect(rule.currentSortedPlaylist?.playlistID == library.playlists.last?.id)
-        #expect(summary == SortingRunSummary(placementCount: 2, createdPlaylistCount: 1))
+        #expect(summary == SortingRunSummary(placementCount: 2, placedIntoPlaylistCount: 1, createdPlaylistCount: 1))
     }
 
     @Test func resumingAGroupedRuleRecreatesOnlyTheDeletedGroupPlaylist() async throws {
@@ -147,7 +147,7 @@ struct PausedRuleTests {
 
         #expect(library.playlists.map(\.name) == ["Rock · Sorted", "Jazz · Sorted"])
         #expect(library.playlists.map(\.songIDs) == [["B", "C"], ["A"]])
-        #expect(summary == SortingRunSummary(placementCount: 2, createdPlaylistCount: 1))
+        #expect(summary == SortingRunSummary(placementCount: 2, placedIntoPlaylistCount: 2, createdPlaylistCount: 1))
         #expect(rule.groupPlaylists.map(\.name) == ["Jazz · Sorted", "Rock · Sorted"])
     }
 }

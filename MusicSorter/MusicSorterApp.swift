@@ -59,13 +59,16 @@ struct MusicSorterApp: App {
             await Self.scheduleBackgroundRun()
             // SwiftUI cancels this task when background time expires, which stops the run
             // before its next change to Apple Music.
-            await Self.sortIfAuthorized(with: coordinator, reason: "background refresh")
+            if let summary = await Self.sortIfAuthorized(with: coordinator, reason: "background refresh") {
+                await SummaryNotification.postIfEnabled(for: summary)
+            }
         }
     }
 
-    private static func sortIfAuthorized(with coordinator: SortingCoordinator, reason: String) async {
-        guard MusicAuthorization.currentStatus == .authorized else { return }
-        await coordinator.sortAutomatically(reason: reason)
+    @discardableResult
+    private static func sortIfAuthorized(with coordinator: SortingCoordinator, reason: String) async -> SortingRunSummary? {
+        guard MusicAuthorization.currentStatus == .authorized else { return nil }
+        return await coordinator.sortAutomatically(reason: reason)
     }
 
     /// Asks iOS for background time for the next Sorting Run, replacing any earlier request.

@@ -114,7 +114,7 @@ struct InterruptedRunTests {
 
         #expect(library.songIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B", "C", "D"])
         #expect(try placedSongIDs(inPlaylistNamed: "Heavy Rotation · Sorted") == ["A", "B", "C", "D"])
-        #expect(summary == SortingRunSummary(placementCount: 2, createdPlaylistCount: 0))
+        #expect(summary == SortingRunSummary(placementCount: 2, placedIntoPlaylistCount: 1, createdPlaylistCount: 0))
         #expect(try lastSortedAt == nextRun)
     }
 
