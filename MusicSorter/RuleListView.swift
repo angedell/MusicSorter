@@ -7,7 +7,8 @@ import OSLog
 import SwiftData
 import SwiftUI
 
-/// The Rules, their Sorted Playlists' Song counts, "Last sorted" and "Sort now".
+/// The Rules, their Sorted Playlists' Song counts, "Last sorted" and "Sort now". A Rule is
+/// edited by tapping it, and started over or deleted from its swipe actions or context menu.
 struct RuleListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Rule.createdAt) private var rules: [Rule]
@@ -17,6 +18,9 @@ struct RuleListView: View {
     @State private var isSorting = false
     @State private var isAddingRule = false
     @State private var sortError: String?
+    @State private var editedRule: Rule?
+    @State private var ruleStartingOver: Rule?
+    @State private var ruleBeingDeleted: Rule?
 
     var body: some View {
         NavigationStack {
@@ -28,7 +32,40 @@ struct RuleListView: View {
                 }
                 Section {
                     ForEach(rules) { rule in
-                        RuleRow(rule: rule)
+                        Button {
+                            editedRule = rule
+                        } label: {
+                            RuleRow(rule: rule)
+                        }
+                        .tint(.primary)
+                        // A Sorting Run in progress holds on to the Rules it fetched, so they
+                        // aren't changed until it ends.
+                        .disabled(isSorting)
+                        .swipeActions {
+                            // Not `.destructive`: that removes the row before the user confirms.
+                            Button("Delete", systemImage: "trash") {
+                                ruleBeingDeleted = rule
+                            }
+                            .tint(.red)
+                            if rule.canStartOver {
+                                Button("Start Over", systemImage: "arrow.counterclockwise") {
+                                    ruleStartingOver = rule
+                                }
+                            }
+                        }
+                        .contextMenu {
+                            Button("Edit", systemImage: "pencil") {
+                                editedRule = rule
+                            }
+                            if rule.canStartOver {
+                                Button("Start Over in a New Playlist", systemImage: "arrow.counterclockwise") {
+                                    ruleStartingOver = rule
+                                }
+                            }
+                            Button("Delete", systemImage: "trash", role: .destructive) {
+                                ruleBeingDeleted = rule
+                            }
+                        }
                     }
                 } footer: {
                     lastSortedText
@@ -64,7 +101,38 @@ struct RuleListView: View {
                 }
             }
             .sheet(isPresented: $isAddingRule) {
-                NewRuleView()
+                RuleEditorView()
+            }
+            .sheet(item: $editedRule) { rule in
+                RuleEditorView(rule: rule)
+            }
+            .confirmationDialog(
+                "Start over in a new playlist?",
+                isPresented: Binding(
+                    get: { ruleStartingOver != nil },
+                    set: { if !$0 { ruleStartingOver = nil } }
+                ),
+                titleVisibility: .visible,
+                presenting: ruleStartingOver
+            ) { rule in
+                Button("Start Over") { rule.startOver() }
+                Button("Cancel", role: .cancel) {}
+            } message: { rule in
+                Text(Self.startOverMessage(for: rule))
+            }
+            .confirmationDialog(
+                "Delete this Rule?",
+                isPresented: Binding(
+                    get: { ruleBeingDeleted != nil },
+                    set: { if !$0 { ruleBeingDeleted = nil } }
+                ),
+                titleVisibility: .visible,
+                presenting: ruleBeingDeleted
+            ) { rule in
+                Button("Delete Rule", role: .destructive) { modelContext.delete(rule) }
+                Button("Cancel", role: .cancel) {}
+            } message: { rule in
+                Text(Self.deleteMessage(for: rule))
             }
             .alert("Sorting Failed", isPresented: .constant(sortError != nil)) {
                 Button("OK") { sortError = nil }
@@ -81,6 +149,24 @@ struct RuleListView: View {
             Text("Last sorted: \(date, format: .relative(presentation: .named))")
         } else {
             Text("Last sorted: never")
+        }
+    }
+
+    /// MusicKit can't delete playlists, so the old ones are left for the user (ADR 0001).
+    private static func startOverMessage(for rule: Rule) -> String {
+        if rule.isGrouped {
+            return "On the next sort, each group gets a new Sorted Playlist with every Song that meets \"\(rule.name)\" then. The current group playlists stay in Music but won't get new Songs; you can delete them in the Music app."
+        }
+        let name = rule.currentSortedPlaylist?.name ?? rule.sortedPlaylistName
+        return "On the next sort, a new Sorted Playlist is created with every Song that meets \"\(rule.name)\" then. \"\(name)\" stays in Music but won't get new Songs; you can delete it in the Music app."
+    }
+
+    private static func deleteMessage(for rule: Rule) -> String {
+        let playlistCount = rule.sortedPlaylists?.count ?? 0
+        return switch playlistCount {
+        case 0: "MusicSorter will stop applying \"\(rule.name)\"."
+        case 1: "MusicSorter will stop applying \"\(rule.name)\". It can't delete playlists from Music, so its Sorted Playlist stays there; you can delete it in the Music app."
+        default: "MusicSorter will stop applying \"\(rule.name)\". It can't delete playlists from Music, so its \(playlistCount) Sorted Playlists stay there; you can delete them in the Music app."
         }
     }
 
@@ -138,7 +224,7 @@ private struct RuleRow: View {
         guard let playlist = rule.currentSortedPlaylist else {
             return "Sorted Playlist created on the next sort"
         }
-        return "\(rule.sortedPlaylistName): \(playlist.songCount) songs"
+        return "\(playlist.name): \(playlist.songCount) songs"
     }
 }
 

@@ -45,6 +45,23 @@ enum Condition: Codable, Hashable {
         }
     }
 
+    /// Whether every Song that meets this Condition also meets `other`. Answers `false`
+    /// when unsure, so an edit is treated as tightening rather than silently allowed.
+    func implies(_ other: Condition) -> Bool {
+        switch (self, other) {
+        case (.playCountAtLeast(let minimum), .playCountAtLeast(let otherMinimum)):
+            minimum >= otherMinimum
+        case (.genreIs(let genre), .genreIs(let otherGenre)):
+            Self.sameName(genre, otherGenre)
+        case (.artistIs(let artist), .artistIs(let otherArtist)):
+            Self.sameName(artist, otherArtist)
+        case (.releasedInYear(let year), .releasedInDecade(let decade)):
+            year / 10 * 10 == decade
+        default:
+            self == other
+        }
+    }
+
     /// Names typed by the user match Apple Music's regardless of case and accents.
     static func sameName(_ a: String, _ b: String) -> Bool {
         a.compare(b, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame

@@ -78,16 +78,42 @@ final class Rule {
 
     var sortedPlaylistName: String { Self.sortedPlaylistName(for: name) }
 
-    /// The Sorted Playlist the Rule currently places Songs into, if it has one yet.
-    var currentSortedPlaylist: SortedPlaylistRecord? {
-        sortedPlaylists?.max(by: { $0.createdAt < $1.createdAt })
+    /// The Sorted Playlists the Rule still places Songs into: every one created since the
+    /// Rule last started over.
+    var attachedSortedPlaylists: [SortedPlaylistRecord] {
+        (sortedPlaylists ?? []).filter { !$0.isDetached }
     }
 
-    /// A Grouped Rule's Group playlists created so far, by name.
+    /// The Sorted Playlist the Rule currently places Songs into, if it has one yet.
+    var currentSortedPlaylist: SortedPlaylistRecord? {
+        attachedSortedPlaylists.max(by: { $0.createdAt < $1.createdAt })
+    }
+
+    /// A Grouped Rule's Group playlists created since it last started over, by name.
     var groupPlaylists: [SortedPlaylistRecord] {
-        (sortedPlaylists ?? [])
+        attachedSortedPlaylists
             .filter { $0.groupValue != nil }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// Whether the Rule has a Sorted Playlist it could start over from.
+    var canStartOver: Bool { !attachedSortedPlaylists.isEmpty }
+
+    /// Detaches every Sorted Playlist of the Rule, so the next Sorting Run creates new ones
+    /// holding every Song that meets the Rule then. The old playlists stay in Music, but the
+    /// app never adds to them again.
+    func startOver() {
+        for playlist in attachedSortedPlaylists {
+            playlist.isDetached = true
+        }
+    }
+
+    /// Whether changing the Rule's Conditions from `old` to `new` could leave out a Song
+    /// that met `old`. Such a Song stays in the Sorted Playlist (ADR 0001), so the user is
+    /// warned. Errs towards warning: an edit counts as tightening unless every new
+    /// Condition is implied by an old one.
+    static func isTightening(from old: [Condition], to new: [Condition]) -> Bool {
+        !new.allSatisfy { condition in old.contains { $0.implies(condition) } }
     }
 }
 
@@ -97,23 +123,29 @@ final class Rule {
 final class SortedPlaylistRecord {
     var rule: Rule?
     var playlistID: String = ""
+    /// The name the playlist was created with. Renaming the Rule doesn't rename it.
+    /// Empty for playlists recorded before the name was stored.
+    var createdName: String = ""
     var createdAt: Date = Date.distantPast
     /// The Group this playlist holds, for a Grouped Rule; `nil` otherwise.
     var groupValue: String?
+    /// Set when the Rule starts over: the app never adds to the playlist again.
+    var isDetached: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \Placement.sortedPlaylist)
     var placements: [Placement]? = []
 
-    init(rule: Rule, playlistID: String, groupValue: String? = nil, createdAt: Date) {
+    init(rule: Rule, playlistID: String, name: String, groupValue: String? = nil, createdAt: Date) {
         self.rule = rule
         self.playlistID = playlistID
+        self.createdName = name
         self.groupValue = groupValue
         self.createdAt = createdAt
     }
 
     /// The name the playlist was created with.
     var name: String {
-        Rule.sortedPlaylistName(for: groupValue ?? rule?.name ?? "")
+        createdName.isEmpty ? Rule.sortedPlaylistName(for: groupValue ?? rule?.name ?? "") : createdName
     }
 
     /// How many Songs the app has placed into this Sorted Playlist.

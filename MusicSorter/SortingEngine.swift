@@ -50,7 +50,7 @@ struct SortingEngine {
             guard let grouping = rule.grouping else { continue }
 
             for (groupValue, songIDs) in Self.groups(of: matchingSongs, by: grouping) {
-                if let record = rule.sortedPlaylists?.first(where: { $0.groupValue == groupValue }) {
+                if let record = rule.attachedSortedPlaylists.first(where: { $0.groupValue == groupValue }) {
                     try await append(songIDs, to: record, now: now, summary: &summary)
                 } else if songIDs.count >= rule.groupThreshold {
                     // The Group's Songs are all placed at once when it reaches the Group
@@ -76,11 +76,9 @@ struct SortingEngine {
         now: Date,
         summary: inout SortingRunSummary
     ) async throws {
-        let playlistID = try await gateway.createPlaylist(
-            named: Rule.sortedPlaylistName(for: groupValue ?? rule.name),
-            songIDs: songIDs
-        )
-        let record = SortedPlaylistRecord(rule: rule, playlistID: playlistID, groupValue: groupValue, createdAt: now)
+        let name = Rule.sortedPlaylistName(for: groupValue ?? rule.name)
+        let playlistID = try await gateway.createPlaylist(named: name, songIDs: songIDs)
+        let record = SortedPlaylistRecord(rule: rule, playlistID: playlistID, name: name, groupValue: groupValue, createdAt: now)
         modelContext.insert(record)
         for songID in songIDs {
             modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))

@@ -43,7 +43,7 @@ The Songs that meet a Grouped Rule and share one grouping value (e.g., all Songs
 _Avoid_: Category, bucket
 
 **Group Threshold**:
-The number of Songs a Group needs before its Sorted Playlist is created; the user sets it per Grouped Rule. Once created, a Group's Sorted Playlist is never removed.
+The number of Songs a Group needs before its Sorted Playlist is created; the user sets it per Grouped Rule. Once created, a Group's Sorted Playlist is never removed; only Starting Over detaches it, after which the Group must reach the threshold again.
 _Avoid_: Minimum, cutoff
 
 **Placement**:
@@ -53,6 +53,10 @@ _Avoid_: Assignment, membership
 **Sorting Run**:
 One pass in which the app reads the Source Playlists, applies every active Rule, and records new Placements. It runs when the app opens and whenever iOS grants background time.
 _Avoid_: Sync, refresh, scan
+
+**Starting Over**:
+Detaching every Sorted Playlist of a Rule, so the next Sorting Run creates new ones holding every Song that meets the Rule then. The detached playlists stay in Music, and the app never adds to them again. The way to undo a tightened Rule's old Placements (ADR 0001).
+_Avoid_: Reset, rebuild
 
 **Paused Rule**:
 A Rule the app has stopped applying because the user deleted one of its Sorted Playlists outside the app.
