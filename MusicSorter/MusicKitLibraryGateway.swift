@@ -15,6 +15,7 @@ import OSLog
 /// - Songs read from a library playlist carry a library ID (`i.…`); their catalog ID is
 ///   only available inside the opaque `playParameters`.
 /// - `playCount` is populated for library Songs.
+/// - `genreNames` is always empty on library Songs; only the catalog gives genres.
 final class MusicKitLibraryGateway: MusicLibraryGateway {
     /// Songs seen in the last read of a Source Playlist, keyed by catalog ID, so they can
     /// be added to a Sorted Playlist without another lookup.
@@ -24,9 +25,15 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
     /// append doesn't need another library request.
     private var playlistsByID: [String: Playlist] = [:]
 
-    /// Each Song's first linked artist (`nil` when it has none), keyed by catalog ID.
-    /// Linked artists come only from the catalog, so they're looked up once per session.
-    private var firstArtistNamesByCatalogID: [String: String?] = [:]
+    /// What only the catalog gives about each Song, keyed by catalog ID, looked up once
+    /// per session.
+    private var catalogDetailsByCatalogID: [String: CatalogDetails] = [:]
+
+    private struct CatalogDetails {
+        /// `nil` when the Song has no linked artist.
+        var firstArtistName: String?
+        var genres: [String]
+    }
 
     func songs(in source: SourcePlaylist) async throws -> [LibrarySong]? {
         let start = ContinuousClock.now
@@ -57,9 +64,11 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
                 releaseDate: song.releaseDate
             ))
         }
-        await loadFirstArtistNames(ofCatalogIDs: songs.map(\.id))
+        await loadCatalogDetails(ofCatalogIDs: songs.map(\.id))
         for index in songs.indices {
-            songs[index].firstArtistName = firstArtistNamesByCatalogID[songs[index].id] ?? nil
+            guard let details = catalogDetailsByCatalogID[songs[index].id] else { continue }
+            songs[index].firstArtistName = details.firstArtistName
+            songs[index].genres = details.genres
         }
         return songs
     }
@@ -118,35 +127,40 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
         return playlist
     }
 
-    /// Looks up the linked artists of the Songs not looked up yet, many Songs per catalog
-    /// request.
-    private func loadFirstArtistNames(ofCatalogIDs catalogIDs: [String]) async {
-        let missing = Array(Set(catalogIDs).subtracting(firstArtistNamesByCatalogID.keys))
+    /// Looks up the linked artists and genres of the Songs not looked up yet, many Songs
+    /// per catalog request.
+    private func loadCatalogDetails(ofCatalogIDs catalogIDs: [String]) async {
+        let missing = Array(Set(catalogIDs).subtracting(catalogDetailsByCatalogID.keys))
         guard !missing.isEmpty else { return }
         let start = ContinuousClock.now
         for batchStart in stride(from: 0, to: missing.count, by: Self.catalogBatchSize) {
             let batch = missing[batchStart..<min(batchStart + Self.catalogBatchSize, missing.count)]
             var request = MusicCatalogResourceRequest<Song>(matching: \.id, memberOf: batch.map { MusicItemID($0) })
             request.properties = [.artists]
-            // Without linked artists only grouping by artist is affected, so a failed lookup
-            // leaves those Songs out of artist Groups until a later run rather than failing
-            // the whole run. Nothing is cached, so the lookup is retried next time.
+            // A failed lookup leaves those Songs without a linked artist or genres, so they
+            // meet no genre Condition and join no artist or genre Group this run. Conditions
+            // can't be negated (ADR 0001), so this only delays their Placements rather than
+            // misplacing them, and doesn't fail the whole run. Nothing is cached, so the
+            // lookup is retried next time.
             let catalogSongs: MusicItemCollection<Song>
             do {
                 catalogSongs = try await request.response().items
             } catch {
-                Self.logger.error("Couldn't look up linked artists: \(error)")
+                Self.logger.error("Couldn't look up catalog details: \(error)")
                 continue
             }
             for song in catalogSongs {
-                firstArtistNamesByCatalogID[song.id.rawValue] = .some(song.artists?.first?.name)
+                catalogDetailsByCatalogID[song.id.rawValue] = CatalogDetails(
+                    firstArtistName: song.artists?.first?.name,
+                    genres: song.genreNames ?? []
+                )
             }
-            // Songs the catalog doesn't return have no linked artist to group by.
-            for catalogID in batch where firstArtistNamesByCatalogID[catalogID] == nil {
-                firstArtistNamesByCatalogID[catalogID] = .some(nil)
+            // Songs the catalog doesn't return have no linked artist or genres.
+            for catalogID in batch where catalogDetailsByCatalogID[catalogID] == nil {
+                catalogDetailsByCatalogID[catalogID] = CatalogDetails(firstArtistName: nil, genres: [])
             }
         }
-        Self.logger.info("Looked up linked artists of \(missing.count) songs in \(ContinuousClock.now - start)")
+        Self.logger.info("Looked up catalog details of \(missing.count) songs in \(ContinuousClock.now - start)")
     }
 
     /// How many Songs one catalog request looks up.
