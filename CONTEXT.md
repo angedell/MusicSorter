@@ -43,7 +43,7 @@ The Songs that meet a Grouped Rule and share one grouping value (e.g., all Songs
 _Avoid_: Category, bucket
 
 **Group Threshold**:
-The number of Songs a Group needs before its Sorted Playlist is created; the user sets it per Grouped Rule. Once created, a Group's Sorted Playlist is never removed; only Starting Over detaches it, after which the Group must reach the threshold again.
+The number of Songs a Group needs before its Sorted Playlist is created; the user sets it per Grouped Rule. Once created, a Group's Sorted Playlist is never removed; only Starting Over, or resuming a Paused Rule after the playlist was deleted, detaches it, after which the Group must reach the threshold again.
 _Avoid_: Minimum, cutoff
 
 **Placement**:
@@ -59,5 +59,5 @@ Detaching every Sorted Playlist of a Rule, so the next Sorting Run creates new o
 _Avoid_: Reset, rebuild
 
 **Paused Rule**:
-A Rule the app has stopped applying because the user deleted one of its Sorted Playlists outside the app.
+A Rule the app has stopped applying because the user deleted one of its Sorted Playlists outside the app. The app never recreates the playlist on its own; for a Grouped Rule, deleting any one Group's playlist pauses the whole Rule. Resuming detaches the deleted playlists, so the next Sorting Run creates new ones holding every Song that meets the Rule then; a Grouped Rule's other Group playlists carry on.
 _Avoid_: Disabled rule, broken rule

@@ -96,8 +96,9 @@ final class Rule {
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
-    /// Whether the Rule has a Sorted Playlist it could start over from.
-    var canStartOver: Bool { !attachedSortedPlaylists.isEmpty }
+    /// Whether the Rule has a Sorted Playlist it could start over from. A Paused Rule is
+    /// resumed instead.
+    var canStartOver: Bool { status == .active && !attachedSortedPlaylists.isEmpty }
 
     /// Detaches every Sorted Playlist of the Rule, so the next Sorting Run creates new ones
     /// holding every Song that meets the Rule then. The old playlists stay in Music, but the
@@ -106,6 +107,31 @@ final class Rule {
         for playlist in attachedSortedPlaylists {
             playlist.isDetached = true
         }
+    }
+
+    /// The Sorted Playlists the user deleted in the Music app, which paused the Rule.
+    var deletedSortedPlaylists: [SortedPlaylistRecord] {
+        attachedSortedPlaylists
+            .filter(\.isDeletedInMusic)
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    /// Pauses the Rule because the user deleted the given Sorted Playlists in the Music app.
+    func pause(deleted playlists: [SortedPlaylistRecord]) {
+        for playlist in playlists {
+            playlist.isDeletedInMusic = true
+        }
+        status = .paused
+    }
+
+    /// Applies a Paused Rule again. Its deleted Sorted Playlists are detached, so the next
+    /// Sorting Run creates new ones holding every Song that meets the Rule then; a Grouped
+    /// Rule's other Group playlists carry on as before.
+    func resume() {
+        for playlist in deletedSortedPlaylists {
+            playlist.isDetached = true
+        }
+        status = .active
     }
 
     /// Whether changing the Rule's Conditions from `old` to `new` could leave out a Song
@@ -131,6 +157,8 @@ final class SortedPlaylistRecord {
     var groupValue: String?
     /// Set when the Rule starts over: the app never adds to the playlist again.
     var isDetached: Bool = false
+    /// Set when a Sorting Run finds the user deleted the playlist in the Music app.
+    var isDeletedInMusic: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \Placement.sortedPlaylist)
     var placements: [Placement]? = []

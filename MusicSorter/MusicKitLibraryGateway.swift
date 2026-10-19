@@ -76,6 +76,21 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
         return playlist.id.rawValue
     }
 
+    func existingPlaylistIDs(among playlistIDs: Set<String>) async throws -> Set<String> {
+        guard !playlistIDs.isEmpty else { return [] }
+        let start = ContinuousClock.now
+        var request = MusicLibraryRequest<Playlist>()
+        request.filter(matching: \.id, memberOf: playlistIDs.map { MusicItemID($0) })
+        let found = try await Self.allItems(startingWith: request.response().items)
+        let existing = Set(found.map(\.id.rawValue))
+        // A deleted playlist mustn't be appended to from the cache.
+        for playlistID in playlistIDs.subtracting(existing) {
+            playlistsByID[playlistID] = nil
+        }
+        Self.logger.info("Found \(existing.count) of \(playlistIDs.count) playlists in \(ContinuousClock.now - start)")
+        return existing
+    }
+
     func append(songID: String, toPlaylistWithID playlistID: String) async throws {
         let start = ContinuousClock.now
         let playlist = try await playlist(withID: playlistID)

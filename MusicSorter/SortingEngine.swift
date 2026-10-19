@@ -10,6 +10,9 @@ import SwiftData
 enum SortingRunWarning: Equatable {
     /// "My Shazam Tracks" doesn't exist, so only Favorite Songs were sorted.
     case shazamPlaylistMissing
+    /// The Rule with this name became a Paused Rule because one of its Sorted Playlists
+    /// was deleted in the Music app.
+    case rulePaused(String)
 }
 
 /// What a Sorting Run did.
@@ -34,6 +37,7 @@ struct SortingEngine {
         }
 
         let rules = try modelContext.fetch(FetchDescriptor<Rule>(sortBy: [SortDescriptor(\.createdAt)]))
+        try await pauseRulesWithDeletedPlaylists(rules, summary: &summary)
         for rule in rules where rule.status == .active {
             let matchingSongs = songs.filter { rule.isMet(by: $0) }
 
@@ -65,6 +69,24 @@ struct SortingEngine {
         state.isShazamPlaylistMissing = summary.warnings.contains(.shazamPlaylistMissing)
         try modelContext.save()
         return summary
+    }
+
+    /// Pauses every active Rule one of whose Sorted Playlists the user deleted in the Music
+    /// app; the app never recreates it on its own. Detached playlists aren't checked, since
+    /// the app no longer adds to them.
+    private func pauseRulesWithDeletedPlaylists(_ rules: [Rule], summary: inout SortingRunSummary) async throws {
+        let activeRules = rules.filter { $0.status == .active }
+        let playlistIDs = Set(activeRules.flatMap { $0.attachedSortedPlaylists.map(\.playlistID) })
+        guard !playlistIDs.isEmpty else { return }
+        let existing = try await gateway.existingPlaylistIDs(among: playlistIDs)
+        guard existing != playlistIDs else { return }
+        for rule in activeRules {
+            let deleted = rule.attachedSortedPlaylists.filter { !existing.contains($0.playlistID) }
+            guard !deleted.isEmpty else { continue }
+            rule.pause(deleted: deleted)
+            summary.warnings.append(.rulePaused(rule.name))
+        }
+        try modelContext.save()
     }
 
     /// Creates a Sorted Playlist already holding its Songs (one MusicKit call instead of

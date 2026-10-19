@@ -49,6 +49,12 @@ final class FakeMusicLibrary: MusicLibraryGateway {
         playlists[index].name = newName
     }
 
+    /// Simulates the user deleting a playlist in the Music app.
+    func delete(playlistNamed name: String) {
+        guard let index = playlists.firstIndex(where: { $0.name == name }) else { return }
+        playlists.remove(at: index)
+    }
+
     /// Simulates the user removing a Song from a playlist by hand in the Music app.
     func removeByHand(songID: String, fromPlaylistNamed name: String) {
         guard let index = playlists.firstIndex(where: { $0.name == name }) else { return }
@@ -61,10 +67,18 @@ final class FakeMusicLibrary: MusicLibraryGateway {
         sourcePlaylists[source]
     }
 
+    /// How many playlists have been created, so IDs stay unique after a deletion.
+    private var createdPlaylistCount = 0
+
     func createPlaylist(named name: String, songIDs: [String]) async throws -> String {
-        let id = "p.\(playlists.count + 1)"
+        createdPlaylistCount += 1
+        let id = "p.\(createdPlaylistCount)"
         playlists.append(FakePlaylist(id: id, name: name, songIDs: songIDs))
         return id
+    }
+
+    func existingPlaylistIDs(among playlistIDs: Set<String>) async throws -> Set<String> {
+        playlistIDs.intersection(playlists.map(\.id))
     }
 
     /// How many times `append` succeeded.

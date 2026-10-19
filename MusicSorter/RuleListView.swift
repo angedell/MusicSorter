@@ -30,6 +30,15 @@ struct RuleListView: View {
                         ShazamSyncBanner()
                     }
                 }
+                ForEach(rules.filter { $0.status == .paused }) { rule in
+                    Section {
+                        PausedRuleBanner(rule: rule)
+                        Button("Resume \"\(rule.name)\"", systemImage: "play") {
+                            rule.resume()
+                        }
+                        .disabled(isSorting)
+                    }
+                }
                 Section {
                     ForEach(rules) { rule in
                         Button {
@@ -190,6 +199,11 @@ private struct RuleRow: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(rule.name)
                 .font(.headline)
+            if rule.status == .paused {
+                Label("Paused", systemImage: "pause.circle")
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
+            }
             ForEach(rule.conditions, id: \.self) { condition in
                 Text(condition.summary)
                     .font(.subheadline)
@@ -203,7 +217,7 @@ private struct RuleRow: View {
                 }
                 let groupPlaylists = rule.groupPlaylists
                 ForEach(groupPlaylists) { playlist in
-                    Text("\(playlist.name): \(playlist.songCount) songs")
+                    Text(Self.summary(of: playlist))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -224,7 +238,13 @@ private struct RuleRow: View {
         guard let playlist = rule.currentSortedPlaylist else {
             return "Sorted Playlist created on the next sort"
         }
-        return "\(playlist.name): \(playlist.songCount) songs"
+        return Self.summary(of: playlist)
+    }
+
+    private static func summary(of playlist: SortedPlaylistRecord) -> String {
+        playlist.isDeletedInMusic
+            ? "\(playlist.name): deleted in Music"
+            : "\(playlist.name): \(playlist.songCount) songs"
     }
 }
 
@@ -242,6 +262,35 @@ private struct ShazamSyncBanner: View {
         } icon: {
             Image(systemName: "shazam.logo")
         }
+    }
+}
+
+/// Explains why a Rule is a Paused Rule and what resuming it does.
+private struct PausedRuleBanner: View {
+    let rule: Rule
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\"\(rule.name)\" is paused")
+                    .font(.headline)
+                Text(explanation)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: "pause.circle")
+                .foregroundStyle(.orange)
+        }
+    }
+
+    private var explanation: String {
+        let names = rule.deletedSortedPlaylists.map { "\"\($0.name)\"" }
+        let deleted = names.isEmpty
+            ? "One of its Sorted Playlists was"
+            : names.formatted(.list(type: .and)) + (names.count == 1 ? " was" : " were")
+        let recreated = names.count > 1 ? "new playlists" : "a new playlist"
+        return "\(deleted) deleted in the Music app, so MusicSorter stopped applying this Rule. Resume to create \(recreated) on the next sort with every Song that meets the Rule."
     }
 }
 

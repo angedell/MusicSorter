@@ -55,6 +55,10 @@ protocol MusicLibraryGateway {
     /// returns its ID. Either the playlist is created with all the Songs, or not at all.
     func createPlaylist(named name: String, songIDs: [String]) async throws -> String
 
+    /// The IDs, among the given ones, of playlists that still exist in the library. A
+    /// playlist the user deleted in the Music app is left out.
+    func existingPlaylistIDs(among playlistIDs: Set<String>) async throws -> Set<String>
+
     /// Appends a Song to the end of the playlist with the given ID. MusicKit adds one item
     /// at a time, so each append either fully succeeds or adds nothing.
     func append(songID: String, toPlaylistWithID playlistID: String) async throws
