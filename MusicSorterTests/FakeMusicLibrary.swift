@@ -61,10 +61,21 @@ final class FakeMusicLibrary: MusicLibraryGateway {
         playlists[index].songIDs.removeAll { $0 == songID }
     }
 
+    /// Simulates denied Music access or no Apple Music subscription; `nil` lets runs sort.
+    var blocker: SortingBlocker?
+
     // MARK: MusicLibraryGateway
+
+    func sortingBlocker() async -> SortingBlocker? {
+        blocker
+    }
 
     func songs(in source: SourcePlaylist) async throws -> [LibrarySong]? {
         sourcePlaylists[source]
+    }
+
+    func sourcePlaylistExists(_ source: SourcePlaylist) async throws -> Bool {
+        sourcePlaylists[source] != nil
     }
 
     /// How many playlists have been created, so IDs stay unique after a deletion.

@@ -57,6 +57,17 @@ final class SortingCoordinator {
         return nil
     }
 
+    /// What keeps the app from sorting, or `nil` if nothing does, for the blocking screens.
+    func sortingBlocker() async -> SortingBlocker? {
+        await gateway.sortingBlocker()
+    }
+
+    /// Whether a Source Playlist exists, for setup's Shazam check. Changes nothing, unlike a
+    /// Sorting Run.
+    func sourcePlaylistExists(_ source: SourcePlaylist) async throws -> Bool {
+        try await gateway.sourcePlaylistExists(source)
+    }
+
     /// Starts a Sorting Run once `previous`, a cancelled run that hasn't stopped yet, ends.
     private func startRun(after previous: Task<SortingRunSummary, any Error>?) -> Task<SortingRunSummary, any Error> {
         isSorting = true
@@ -73,6 +84,10 @@ final class SortingCoordinator {
             _ = await previous?.result
             let start = ContinuousClock.now
             let summary = try await engine.run(now: now())
+            if let blocker = summary.blocker {
+                Logger.sortingRun.info("Sorting Run blocked: \(String(describing: blocker), privacy: .public)")
+                return summary
+            }
             Logger.sortingRun.info("Sorting Run placed \(summary.placementCount) songs into \(summary.placedIntoPlaylistCount) playlists, created \(summary.createdPlaylistCount) playlists, with \(summary.warnings.count) warnings, in \(ContinuousClock.now - start)")
             return summary
         }

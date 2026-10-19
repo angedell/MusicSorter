@@ -22,6 +22,8 @@ struct SortingRunSummary: Equatable {
     var placedIntoPlaylistCount: Int = 0
     var createdPlaylistCount: Int = 0
     var warnings: [SortingRunWarning] = []
+    /// Set when the run did nothing because something keeps the app from sorting.
+    var blocker: SortingBlocker?
 }
 
 /// Runs Sorting Runs: reads the Source Playlists, applies every active Rule and records
@@ -37,6 +39,10 @@ struct SortingEngine {
 
     func run(now: Date) async throws -> SortingRunSummary {
         try Task.checkCancellation()
+        // A blocked run reads and changes nothing, and doesn't count as "Last sorted".
+        if let blocker = await gateway.sortingBlocker() {
+            return SortingRunSummary(blocker: blocker)
+        }
         var summary = SortingRunSummary()
         var (songs, missingSources) = try await currentSongs()
         try recordFirstSeen(of: &songs, now: now)

@@ -46,10 +46,27 @@ struct LibrarySong: Hashable, Sendable {
     var firstSeen: [SourcePlaylist: Date] = [:]
 }
 
+/// What keeps the app from sorting. While one applies, the app shows a blocking screen and
+/// a Sorting Run does nothing.
+enum SortingBlocker: Equatable, Sendable {
+    /// Access to the Apple Music library hasn't been granted: not asked for yet, denied or
+    /// restricted.
+    case noMusicAccess
+    /// The user has no Apple Music subscription, which Sorted Playlists need.
+    case noSubscription
+}
+
 /// The app's only connection to the Apple Music library, and the only test seam.
 protocol MusicLibraryGateway {
+    /// What keeps the app from sorting, or `nil` if nothing does. Never asks the user for
+    /// access.
+    func sortingBlocker() async -> SortingBlocker?
+
     /// The Songs of a Source Playlist, or `nil` if the playlist doesn't exist.
     func songs(in source: SourcePlaylist) async throws -> [LibrarySong]?
+
+    /// Whether a Source Playlist exists, without reading its Songs.
+    func sourcePlaylistExists(_ source: SourcePlaylist) async throws -> Bool
 
     /// Creates a playlist with the given name, holding the given Songs in order, and
     /// returns its ID. Either the playlist is created with all the Songs, or not at all.

@@ -6,7 +6,6 @@
 //
 
 import BackgroundTasks
-import MusicKit
 import OSLog
 import SwiftUI
 import SwiftData
@@ -47,7 +46,7 @@ struct MusicSorterApp: App {
         .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {
             case .active:
-                Task { await Self.sortIfAuthorized(with: coordinator, reason: "foreground") }
+                Task { await coordinator.sortAutomatically(reason: "foreground") }
             case .background:
                 Task { await Self.scheduleBackgroundRun() }
             default:
@@ -58,17 +57,12 @@ struct MusicSorterApp: App {
             // Rescheduled first, so a run that's cut short still leads to the next one.
             await Self.scheduleBackgroundRun()
             // SwiftUI cancels this task when background time expires, which stops the run
-            // before its next change to Apple Music.
-            if let summary = await Self.sortIfAuthorized(with: coordinator, reason: "background refresh") {
+            // before its next change to Apple Music. A blocked run places nothing, so posts
+            // nothing.
+            if let summary = await coordinator.sortAutomatically(reason: "background refresh") {
                 await SummaryNotification.postIfEnabled(for: summary)
             }
         }
-    }
-
-    @discardableResult
-    private static func sortIfAuthorized(with coordinator: SortingCoordinator, reason: String) async -> SortingRunSummary? {
-        guard MusicAuthorization.currentStatus == .authorized else { return nil }
-        return await coordinator.sortAutomatically(reason: reason)
     }
 
     /// Asks iOS for background time for the next Sorting Run, replacing any earlier request.

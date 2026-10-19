@@ -35,6 +35,17 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
         var genres: [String]
     }
 
+    func sortingBlocker() async -> SortingBlocker? {
+        guard MusicAuthorization.currentStatus == .authorized else { return .noMusicAccess }
+        do {
+            guard try await MusicSubscription.current.canPlayCatalogContent else { return .noSubscription }
+        } catch {
+            // Not knowing isn't reason to block: the run fails on its own if it can't sort.
+            Self.logger.error("Couldn't check the Apple Music subscription: \(error)")
+        }
+        return nil
+    }
+
     func songs(in source: SourcePlaylist) async throws -> [LibrarySong]? {
         let start = ContinuousClock.now
         defer { Self.logger.info("Read \(source.rawValue) in \(ContinuousClock.now - start)") }
@@ -71,6 +82,10 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
             songs[index].genres = details.genres
         }
         return songs
+    }
+
+    func sourcePlaylistExists(_ source: SourcePlaylist) async throws -> Bool {
+        try await libraryPlaylist(named: source.libraryName) != nil
     }
 
     func createPlaylist(named name: String, songIDs: [String]) async throws -> String {
