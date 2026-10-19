@@ -74,6 +74,7 @@ final class FakeMusicLibrary: MusicLibraryGateway {
         createdPlaylistCount += 1
         let id = "p.\(createdPlaylistCount)"
         playlists.append(FakePlaylist(id: id, name: name, songIDs: songIDs))
+        try await didWrite()
         return id
     }
 
@@ -97,11 +98,25 @@ final class FakeMusicLibrary: MusicLibraryGateway {
         }
         playlists[index].songIDs.append(songID)
         appendCount += 1
+        try await didWrite()
     }
 
     /// When set, this many appends succeed and the next one fails, simulating a run that
-    /// is interrupted part-way (e.g. background time expiring).
+    /// is interrupted part-way (e.g. an add failing).
     var appendsBeforeFailure: Int?
+
+    /// Called once, right after the next playlist is created or Song appended, e.g. to
+    /// cancel the Sorting Run mid-write as when background time expires.
+    var onNextWrite: (() async -> Void)?
+
+    /// Like MusicKit, a write whose task was cancelled while it ran reports the
+    /// cancellation even though the change already reached the library.
+    private func didWrite() async throws {
+        let onWrite = onNextWrite
+        onNextWrite = nil
+        await onWrite?()
+        try Task.checkCancellation()
+    }
 
     enum FakeError: Error {
         case noSuchPlaylist

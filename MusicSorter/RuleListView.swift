@@ -3,7 +3,6 @@
 //  MusicSorter
 //
 
-import OSLog
 import SwiftData
 import SwiftUI
 
@@ -14,8 +13,7 @@ struct RuleListView: View {
     @Query(sort: \Rule.createdAt) private var rules: [Rule]
     @Query private var appStates: [AppState]
 
-    @State private var gateway = MusicKitLibraryGateway()
-    @State private var isSorting = false
+    @Environment(SortingCoordinator.self) private var coordinator
     @State private var isAddingRule = false
     @State private var sortError: String?
     @State private var editedRule: Rule?
@@ -151,8 +149,6 @@ struct RuleListView: View {
         }
     }
 
-    private static let logger = Logger(subsystem: "it.angedell.MusicSorter", category: "SortingRun")
-
     private var lastSortedText: Text {
         if let date = appStates.first?.lastSortingRunAt {
             Text("Last sorted: \(date, format: .relative(presentation: .named))")
@@ -179,13 +175,12 @@ struct RuleListView: View {
         }
     }
 
+    /// Whether a Sorting Run is in progress, including one started automatically.
+    private var isSorting: Bool { coordinator.isSorting }
+
     private func sortNow() async {
-        isSorting = true
-        defer { isSorting = false }
-        let start = ContinuousClock.now
         do {
-            let summary = try await SortingEngine(gateway: gateway, modelContext: modelContext).run(now: .now)
-            Self.logger.info("Sorting Run placed \(summary.placementCount) songs, created \(summary.createdPlaylistCount) playlists, with \(summary.warnings.count) warnings, in \(ContinuousClock.now - start)")
+            try await coordinator.sort()
         } catch {
             sortError = error.localizedDescription
         }
@@ -294,7 +289,17 @@ private struct PausedRuleBanner: View {
     }
 }
 
+/// Gives the previewed list a coordinator over the preview's store.
+private struct RuleListPreview: View {
+    @Environment(\.modelContext) private var modelContext
+
+    var body: some View {
+        RuleListView()
+            .environment(SortingCoordinator(gateway: MusicKitLibraryGateway(), modelContext: modelContext))
+    }
+}
+
 #Preview {
-    RuleListView()
+    RuleListPreview()
         .modelContainer(for: MusicSorterSchema.models, inMemory: true)
 }

@@ -12,6 +12,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var authorization = MusicAuthorization.currentStatus
     @Environment(\.openURL) private var openURL
+    @Environment(SortingCoordinator.self) private var coordinator
 
     var body: some View {
         switch authorization {
@@ -24,7 +25,14 @@ struct ContentView: View {
                 Text("MusicSorter reads your Favorite Songs and Shazams and files them into Sorted Playlists in your library.")
             } actions: {
                 Button("Allow Access") {
-                    Task { authorization = await MusicAuthorization.request() }
+                    Task {
+                        authorization = await MusicAuthorization.request()
+                        // The app is already in the foreground, so the run on opening it
+                        // was skipped for lack of access.
+                        if authorization == .authorized {
+                            await coordinator.sortAutomatically(reason: "access granted")
+                        }
+                    }
                 }
                 .buttonStyle(.borderedProminent)
             }

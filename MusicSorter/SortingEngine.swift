@@ -24,11 +24,17 @@ struct SortingRunSummary: Equatable {
 
 /// Runs Sorting Runs: reads the Source Playlists, applies every active Rule and records
 /// new Placements.
+///
+/// A run may stop part-way: an add can fail, or the run's task can be cancelled (as when
+/// background time expires), which stops it before its next change to Apple Music; a change
+/// already under way is let finish. Every change is recorded as soon as it succeeds, so the next run picks up where this one
+/// stopped, and "Last sorted" is set only by a run that completes.
 struct SortingEngine {
     let gateway: any MusicLibraryGateway
     let modelContext: ModelContext
 
     func run(now: Date) async throws -> SortingRunSummary {
+        try Task.checkCancellation()
         var summary = SortingRunSummary()
         var (songs, missingSources) = try await currentSongs()
         try recordFirstSeen(of: &songs, now: now)
@@ -99,7 +105,7 @@ struct SortingEngine {
         summary: inout SortingRunSummary
     ) async throws {
         let name = Rule.sortedPlaylistName(for: groupValue ?? rule.name)
-        let playlistID = try await gateway.createPlaylist(named: name, songIDs: songIDs)
+        let playlistID = try await uncancellable { try await gateway.createPlaylist(named: name, songIDs: songIDs) }
         let record = SortedPlaylistRecord(rule: rule, playlistID: playlistID, name: name, groupValue: groupValue, createdAt: now)
         modelContext.insert(record)
         for songID in songIDs {
@@ -120,11 +126,20 @@ struct SortingEngine {
     ) async throws {
         let alreadyPlaced = Set((record.placements ?? []).map(\.songID))
         for songID in songIDs where !alreadyPlaced.contains(songID) {
-            try await gateway.append(songID: songID, toPlaylistWithID: record.playlistID)
+            try await uncancellable { try await gateway.append(songID: songID, toPlaylistWithID: record.playlistID) }
             modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
             try modelContext.save()
             summary.placementCount += 1
         }
+    }
+
+    /// Makes a change to Apple Music unless the run was cancelled. Once started, the change
+    /// isn't told of a cancellation: it could reach the library yet report the cancellation,
+    /// leaving it unrecorded and repeated by the next run.
+    private func uncancellable<T: Sendable>(_ change: @escaping () async throws -> T) async throws -> T {
+        try Task.checkCancellation()
+        // An unstructured task doesn't inherit the run's cancellation.
+        return try await Task { try await change() }.value
     }
 
     /// The Songs' IDs by Group, Groups in the order their first Song was found. Songs
