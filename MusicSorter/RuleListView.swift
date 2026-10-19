@@ -109,9 +109,28 @@ private struct RuleRow: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            Text(playlistSummary)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            if rule.isGrouped {
+                if let grouping = rule.grouping {
+                    Text(grouping.summary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                let groupPlaylists = rule.groupPlaylists
+                ForEach(groupPlaylists) { playlist in
+                    Text("\(playlist.name): \(playlist.songCount) songs")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                if groupPlaylists.isEmpty {
+                    Text("A group's Sorted Playlist is created once it has \(rule.groupThreshold) songs")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Text(playlistSummary)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 

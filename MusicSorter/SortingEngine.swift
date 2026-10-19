@@ -35,34 +35,28 @@ struct SortingEngine {
 
         let rules = try modelContext.fetch(FetchDescriptor<Rule>(sortBy: [SortDescriptor(\.createdAt)]))
         for rule in rules where rule.status == .active {
-            let matchingSongIDs = songs.filter { rule.isMet(by: $0) }.map(\.id)
+            let matchingSongs = songs.filter { rule.isMet(by: $0) }
 
-            guard let record = rule.currentSortedPlaylist else {
-                // A new Sorted Playlist is created already holding its Songs: one MusicKit
-                // call instead of one slow add per Song.
-                let playlistID = try await gateway.createPlaylist(
-                    named: rule.sortedPlaylistName,
-                    songIDs: matchingSongIDs
-                )
-                let record = SortedPlaylistRecord(rule: rule, playlistID: playlistID, createdAt: now)
-                modelContext.insert(record)
-                for songID in matchingSongIDs {
-                    modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
+            guard rule.isGrouped else {
+                let matchingSongIDs = matchingSongs.map(\.id)
+                if let record = rule.currentSortedPlaylist {
+                    try await append(matchingSongIDs, to: record, now: now, summary: &summary)
+                } else {
+                    try await createSortedPlaylist(for: rule, groupValue: nil, songIDs: matchingSongIDs, now: now, summary: &summary)
                 }
-                try modelContext.save()
-                summary.createdPlaylistCount += 1
-                summary.placementCount += matchingSongIDs.count
                 continue
             }
+            // A Grouping that can't be read can't be applied, so the Rule places nothing.
+            guard let grouping = rule.grouping else { continue }
 
-            let alreadyPlaced = Set((record.placements ?? []).map(\.songID))
-            // Each Placement is written right after its add succeeds, so an interrupted run
-            // resumes without duplicates.
-            for songID in matchingSongIDs where !alreadyPlaced.contains(songID) {
-                try await gateway.append(songID: songID, toPlaylistWithID: record.playlistID)
-                modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
-                try modelContext.save()
-                summary.placementCount += 1
+            for (groupValue, songIDs) in Self.groups(of: matchingSongs, by: grouping) {
+                if let record = rule.sortedPlaylists?.first(where: { $0.groupValue == groupValue }) {
+                    try await append(songIDs, to: record, now: now, summary: &summary)
+                } else if songIDs.count >= rule.groupThreshold {
+                    // The Group's Songs are all placed at once when it reaches the Group
+                    // Threshold; below it, the Group has no Sorted Playlist.
+                    try await createSortedPlaylist(for: rule, groupValue: groupValue, songIDs: songIDs, now: now, summary: &summary)
+                }
             }
         }
 
@@ -71,6 +65,63 @@ struct SortingEngine {
         state.isShazamPlaylistMissing = summary.warnings.contains(.shazamPlaylistMissing)
         try modelContext.save()
         return summary
+    }
+
+    /// Creates a Sorted Playlist already holding its Songs (one MusicKit call instead of
+    /// one slow add per Song) and records their Placements.
+    private func createSortedPlaylist(
+        for rule: Rule,
+        groupValue: String?,
+        songIDs: [String],
+        now: Date,
+        summary: inout SortingRunSummary
+    ) async throws {
+        let playlistID = try await gateway.createPlaylist(
+            named: Rule.sortedPlaylistName(for: groupValue ?? rule.name),
+            songIDs: songIDs
+        )
+        let record = SortedPlaylistRecord(rule: rule, playlistID: playlistID, groupValue: groupValue, createdAt: now)
+        modelContext.insert(record)
+        for songID in songIDs {
+            modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
+        }
+        try modelContext.save()
+        summary.createdPlaylistCount += 1
+        summary.placementCount += songIDs.count
+    }
+
+    /// Appends the Songs not yet placed in the Sorted Playlist. Each Placement is written
+    /// right after its add succeeds, so an interrupted run resumes without duplicates.
+    private func append(
+        _ songIDs: [String],
+        to record: SortedPlaylistRecord,
+        now: Date,
+        summary: inout SortingRunSummary
+    ) async throws {
+        let alreadyPlaced = Set((record.placements ?? []).map(\.songID))
+        for songID in songIDs where !alreadyPlaced.contains(songID) {
+            try await gateway.append(songID: songID, toPlaylistWithID: record.playlistID)
+            modelContext.insert(Placement(sortedPlaylist: record, songID: songID, placedAt: now))
+            try modelContext.save()
+            summary.placementCount += 1
+        }
+    }
+
+    /// The Songs' IDs by Group, Groups in the order their first Song was found. Songs
+    /// missing the grouping value are left out.
+    private static func groups(of songs: [LibrarySong], by grouping: Grouping) -> [(value: String, songIDs: [String])] {
+        var groups: [(value: String, songIDs: [String])] = []
+        var indexByValue: [String: Int] = [:]
+        for song in songs {
+            guard let value = grouping.value(for: song) else { continue }
+            if let index = indexByValue[value] {
+                groups[index].songIDs.append(song.id)
+            } else {
+                indexByValue[value] = groups.count
+                groups.append((value, [song.id]))
+            }
+        }
+        return groups
     }
 
     /// Records First Seen as `now` for each Song and Source Playlist pair not seen before,

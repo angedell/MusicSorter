@@ -7,7 +7,7 @@ import Foundation
 import SwiftData
 
 /// A user-defined set of Conditions, all of which a Song must meet to be placed into the
-/// Rule's Sorted Playlist.
+/// Rule's Sorted Playlist or, for a Grouped Rule, into its Group's Sorted Playlist.
 ///
 /// Properties are defaulted and relationships optional to stay compatible with CloudKit.
 @Model
@@ -22,14 +22,28 @@ final class Rule {
     var statusRawValue: String = Status.active.rawValue
     /// Conditions are stored JSON-encoded so the enum's associated values survive persistence.
     var conditionsData: Data = Data()
+    /// The JSON-encoded Grouping, or `nil` for a Rule that isn't grouped.
+    var groupingData: Data?
+    /// How many Songs a Group needs before its Sorted Playlist is created.
+    var groupThreshold: Int = 5
 
     @Relationship(deleteRule: .cascade, inverse: \SortedPlaylistRecord.rule)
     var sortedPlaylists: [SortedPlaylistRecord]? = []
 
-    init(name: String, conditions: [Condition], createdAt: Date) {
+    init(
+        name: String,
+        conditions: [Condition],
+        grouping: Grouping? = nil,
+        groupThreshold: Int = 5,
+        createdAt: Date
+    ) {
         self.name = name
         self.createdAt = createdAt
         self.conditions = conditions
+        if let grouping {
+            self.groupingData = try? JSONEncoder().encode(grouping)
+        }
+        self.groupThreshold = groupThreshold
     }
 
     var status: Status {
@@ -47,16 +61,33 @@ final class Rule {
         try? JSONDecoder().decode([Condition].self, from: conditionsData)
     }
 
-    /// The name a Sorted Playlist is created with for a Rule called `ruleName`.
-    static func sortedPlaylistName(forRuleNamed ruleName: String) -> String {
-        "\(ruleName) · Sorted"
+    var isGrouped: Bool { groupingData != nil }
+
+    /// The decoded Grouping, or `nil` if the Rule isn't grouped or the stored data can't
+    /// be read.
+    var grouping: Grouping? {
+        guard let groupingData else { return nil }
+        return try? JSONDecoder().decode(Grouping.self, from: groupingData)
     }
 
-    var sortedPlaylistName: String { Self.sortedPlaylistName(forRuleNamed: name) }
+    /// The name a Sorted Playlist is created with, given the Rule's name or, for a Grouped
+    /// Rule, the Group's value.
+    static func sortedPlaylistName(for ruleNameOrGroupValue: String) -> String {
+        "\(ruleNameOrGroupValue) · Sorted"
+    }
+
+    var sortedPlaylistName: String { Self.sortedPlaylistName(for: name) }
 
     /// The Sorted Playlist the Rule currently places Songs into, if it has one yet.
     var currentSortedPlaylist: SortedPlaylistRecord? {
         sortedPlaylists?.max(by: { $0.createdAt < $1.createdAt })
+    }
+
+    /// A Grouped Rule's Group playlists created so far, by name.
+    var groupPlaylists: [SortedPlaylistRecord] {
+        (sortedPlaylists ?? [])
+            .filter { $0.groupValue != nil }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 }
 
@@ -67,14 +98,22 @@ final class SortedPlaylistRecord {
     var rule: Rule?
     var playlistID: String = ""
     var createdAt: Date = Date.distantPast
+    /// The Group this playlist holds, for a Grouped Rule; `nil` otherwise.
+    var groupValue: String?
 
     @Relationship(deleteRule: .cascade, inverse: \Placement.sortedPlaylist)
     var placements: [Placement]? = []
 
-    init(rule: Rule, playlistID: String, createdAt: Date) {
+    init(rule: Rule, playlistID: String, groupValue: String? = nil, createdAt: Date) {
         self.rule = rule
         self.playlistID = playlistID
+        self.groupValue = groupValue
         self.createdAt = createdAt
+    }
+
+    /// The name the playlist was created with.
+    var name: String {
+        Rule.sortedPlaylistName(for: groupValue ?? rule?.name ?? "")
     }
 
     /// How many Songs the app has placed into this Sorted Playlist.

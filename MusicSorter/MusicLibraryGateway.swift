@@ -32,6 +32,9 @@ struct LibrarySong: Hashable, Sendable {
     var genres: [String] = []
     /// The Song's credited artist, or `nil` if Apple Music doesn't give one.
     var artistName: String?
+    /// The name of the first artist linked to the Song, e.g. "Daft Punk" for a Song
+    /// credited to "Daft Punk & Pharrell Williams". `nil` when Apple Music links none.
+    var firstArtistName: String?
     /// `nil` when Apple Music doesn't give a release date.
     var releaseDate: Date?
     /// The Source Playlists the Song was found in. Filled in by the Sorting Engine when it

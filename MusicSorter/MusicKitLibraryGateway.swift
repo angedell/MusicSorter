@@ -24,6 +24,10 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
     /// append doesn't need another library request.
     private var playlistsByID: [String: Playlist] = [:]
 
+    /// Each Song's first linked artist (`nil` when it has none), keyed by catalog ID.
+    /// Linked artists come only from the catalog, so they're looked up once per session.
+    private var firstArtistNamesByCatalogID: [String: String?] = [:]
+
     func songs(in source: SourcePlaylist) async throws -> [LibrarySong]? {
         let start = ContinuousClock.now
         defer { Self.logger.info("Read \(source.rawValue) in \(ContinuousClock.now - start)") }
@@ -52,6 +56,10 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
                 artistName: song.artistName.isEmpty ? nil : song.artistName,
                 releaseDate: song.releaseDate
             ))
+        }
+        await loadFirstArtistNames(ofCatalogIDs: songs.map(\.id))
+        for index in songs.indices {
+            songs[index].firstArtistName = firstArtistNamesByCatalogID[songs[index].id] ?? nil
         }
         return songs
     }
@@ -94,6 +102,40 @@ final class MusicKitLibraryGateway: MusicLibraryGateway {
         playlistsByID[playlistID] = playlist
         return playlist
     }
+
+    /// Looks up the linked artists of the Songs not looked up yet, many Songs per catalog
+    /// request.
+    private func loadFirstArtistNames(ofCatalogIDs catalogIDs: [String]) async {
+        let missing = Array(Set(catalogIDs).subtracting(firstArtistNamesByCatalogID.keys))
+        guard !missing.isEmpty else { return }
+        let start = ContinuousClock.now
+        for batchStart in stride(from: 0, to: missing.count, by: Self.catalogBatchSize) {
+            let batch = missing[batchStart..<min(batchStart + Self.catalogBatchSize, missing.count)]
+            var request = MusicCatalogResourceRequest<Song>(matching: \.id, memberOf: batch.map { MusicItemID($0) })
+            request.properties = [.artists]
+            // Without linked artists only grouping by artist is affected, so a failed lookup
+            // leaves those Songs out of artist Groups until a later run rather than failing
+            // the whole run. Nothing is cached, so the lookup is retried next time.
+            let catalogSongs: MusicItemCollection<Song>
+            do {
+                catalogSongs = try await request.response().items
+            } catch {
+                Self.logger.error("Couldn't look up linked artists: \(error)")
+                continue
+            }
+            for song in catalogSongs {
+                firstArtistNamesByCatalogID[song.id.rawValue] = .some(song.artists?.first?.name)
+            }
+            // Songs the catalog doesn't return have no linked artist to group by.
+            for catalogID in batch where firstArtistNamesByCatalogID[catalogID] == nil {
+                firstArtistNamesByCatalogID[catalogID] = .some(nil)
+            }
+        }
+        Self.logger.info("Looked up linked artists of \(missing.count) songs in \(ContinuousClock.now - start)")
+    }
+
+    /// How many Songs one catalog request looks up.
+    private static let catalogBatchSize = 100
 
     private func libraryPlaylist(named name: String) async throws -> Playlist? {
         let firstPlaylists = try await MusicLibraryRequest<Playlist>().response().items

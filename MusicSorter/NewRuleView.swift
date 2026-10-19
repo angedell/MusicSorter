@@ -7,7 +7,7 @@ import SwiftData
 import SwiftUI
 
 /// Creates a Rule from any combination of Conditions: play count, Source Playlist, genre,
-/// artist, release decade or year and First Seen.
+/// artist, release decade or year and First Seen. The Rule can be made a Grouped Rule.
 struct NewRuleView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -26,6 +26,15 @@ struct NewRuleView: View {
         case between
     }
 
+    /// What the Rule groups by, if it's a Grouped Rule.
+    private enum GroupingOption: Hashable {
+        case none
+        case primaryGenre
+        case artist
+        case releaseDecade
+        case firstSeenYear
+    }
+
     @State private var name = ""
     @State private var requiresPlayCount = true
     @State private var minimumPlayCount = 10
@@ -40,6 +49,8 @@ struct NewRuleView: View {
     @State private var firstSeenYear = Calendar.current.component(.year, from: .now)
     @State private var firstSeenFirstDay = Date.now
     @State private var firstSeenLastDay = Date.now
+    @State private var groupingOption = GroupingOption.none
+    @State private var groupThreshold = 5
 
     private static let latestYear = Calendar.current.component(.year, from: .now) + 1
 
@@ -78,13 +89,61 @@ struct NewRuleView: View {
         return conditions
     }
 
+    private var grouping: Grouping? {
+        switch groupingOption {
+        case .none: nil
+        case .primaryGenre: .primaryGenre
+        case .artist: .artist
+        case .releaseDecade: .releaseDecade
+        // As with the First Seen Condition, a chosen Source Playlist's First Seen is used.
+        case .firstSeenYear: .firstSeenYear(in: source)
+        }
+    }
+
+    private var playlistNameFooter: String {
+        switch groupingOption {
+        case .none:
+            "The Sorted Playlist will be called \"\(Rule.sortedPlaylistName(for: trimmedName.isEmpty ? "Name" : trimmedName))\"."
+        case .primaryGenre:
+            "Each genre's Sorted Playlist will be called by the genre, e.g. \"\(Rule.sortedPlaylistName(for: "Jazz"))\"."
+        case .artist:
+            "Each artist's Sorted Playlist will be called by the artist, e.g. \"\(Rule.sortedPlaylistName(for: "Daft Punk"))\"."
+        case .releaseDecade:
+            "Each decade's Sorted Playlist will be called by the decade, e.g. \"\(Rule.sortedPlaylistName(for: "1990s"))\"."
+        case .firstSeenYear:
+            "Each year's Sorted Playlist will be called by the year, e.g. \"\(Rule.sortedPlaylistName(for: "2026"))\"."
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     TextField("Name", text: $name)
                 } footer: {
-                    Text("The Sorted Playlist will be called \"\(Rule.sortedPlaylistName(forRuleNamed: trimmedName.isEmpty ? "Name" : trimmedName))\".")
+                    Text(playlistNameFooter)
+                }
+                Section {
+                    Picker("Group By", selection: $groupingOption) {
+                        Text("None").tag(GroupingOption.none)
+                        Text("Genre").tag(GroupingOption.primaryGenre)
+                        Text("Artist").tag(GroupingOption.artist)
+                        Text("Release Decade").tag(GroupingOption.releaseDecade)
+                        Text("Year First Seen").tag(GroupingOption.firstSeenYear)
+                    }
+                    if groupingOption != .none {
+                        Stepper(
+                            "At least \(groupThreshold) songs per group",
+                            value: $groupThreshold,
+                            in: 1...999
+                        )
+                    }
+                } header: {
+                    Text("Grouping")
+                } footer: {
+                    if groupingOption != .none {
+                        Text("A group's Sorted Playlist is created once the group has \(groupThreshold) songs, then grows as more songs join. Songs without a value to group by are left out.")
+                    }
                 }
                 Section {
                     Toggle("Play Count", isOn: $requiresPlayCount)
@@ -167,12 +226,15 @@ struct NewRuleView: View {
                         modelContext.insert(Rule(
                             name: trimmedName,
                             conditions: conditions,
+                            grouping: grouping,
+                            groupThreshold: groupThreshold,
                             createdAt: .now
                         ))
                         dismiss()
                     }
-                    // A Rule with no Conditions would place every Song, for good.
-                    .disabled(trimmedName.isEmpty || conditions.isEmpty)
+                    // A Rule with no Conditions would place every Song, for good. A Grouped
+                    // Rule may have none: it files every Song into its Group.
+                    .disabled(trimmedName.isEmpty || (conditions.isEmpty && grouping == nil))
                 }
             }
         }

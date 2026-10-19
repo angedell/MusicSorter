@@ -37,38 +37,21 @@ enum Condition: Codable, Hashable {
         case .artistIs(let artist):
             song.artistName.map { Self.sameName($0, artist) } ?? false
         case .releasedInYear(let year):
-            Self.releaseYear(of: song) == year
+            song.releaseYear == year
         case .releasedInDecade(let decade):
-            Self.releaseYear(of: song).map { $0 / 10 * 10 == decade } ?? false
+            song.releaseDecade == decade
         case .firstSeen(let period, let source):
-            Self.firstSeen(of: song, in: source).map(period.contains) ?? false
+            song.firstSeen(in: source).map(period.contains) ?? false
         }
-    }
-
-    private static func firstSeen(of song: LibrarySong, in source: SourcePlaylist?) -> Date? {
-        if let source {
-            song.firstSeen[source]
-        } else {
-            song.firstSeen.values.min()
-        }
-    }
-
-    /// Apple Music release dates are calendar days stored as midnight UTC, so the year is
-    /// read in UTC; in the device's time zone 1 January could fall in the year before.
-    private static func releaseYear(of song: LibrarySong) -> Int? {
-        guard let releaseDate = song.releaseDate else { return nil }
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = .gmt
-        return calendar.component(.year, from: releaseDate)
     }
 
     /// Names typed by the user match Apple Music's regardless of case and accents.
-    private static func sameName(_ a: String, _ b: String) -> Bool {
+    static func sameName(_ a: String, _ b: String) -> Bool {
         a.compare(b, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
     }
 
     /// The genre Apple Music lists for nearly every Song, which says nothing about it.
-    private static let catchAllGenre = "Music"
+    static let catchAllGenre = "Music"
 
     /// How the Condition reads in the UI.
     var summary: String {
@@ -133,6 +116,38 @@ struct FirstSeenPeriod: Codable, Hashable {
         case .between(let firstDay, let lastDay):
             let style = Date.FormatStyle(date: .abbreviated, time: .omitted, timeZone: timeZone)
             return "between \(firstDay.formatted(style)) and \(lastDay.formatted(style))"
+        }
+    }
+}
+
+/// Song attributes read the same way by Conditions and Groupings.
+extension LibrarySong {
+    /// Apple Music release dates are calendar days stored as midnight UTC, so the year is
+    /// read in UTC; in the device's time zone 1 January could fall in the year before.
+    var releaseYear: Int? {
+        guard let releaseDate else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        return calendar.component(.year, from: releaseDate)
+    }
+
+    /// The decade's first year, e.g. 1990 for 1990–1999.
+    var releaseDecade: Int? {
+        releaseYear.map { $0 / 10 * 10 }
+    }
+
+    /// The first genre listed other than the catch-all "Music".
+    var primaryGenre: String? {
+        genres.first { !Condition.sameName($0, Condition.catchAllGenre) }
+    }
+
+    /// The Song's First Seen in `source` or, with no source, its earliest First Seen in
+    /// any Source Playlist.
+    func firstSeen(in source: SourcePlaylist?) -> Date? {
+        if let source {
+            firstSeen[source]
+        } else {
+            firstSeen.values.min()
         }
     }
 }
